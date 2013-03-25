@@ -20,7 +20,7 @@ main(int argc, char * argv[])
   srand((unsigned int) time(NULL)); // inits random
 
   sParams params = loadConf(NULL);
-  sGenome gen = createGenome(0, 8, 3);
+  sGenome gen = createInitialGenome(0, 8, 3);
   sInnovTable innovTable = createNewInnovTable(gen.vNeurons, gen.iNumNeurons,
                                                gen.vLinks, gen.iNumLinks);
   dumpGenome(gen);

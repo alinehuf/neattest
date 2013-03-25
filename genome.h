@@ -9,6 +9,7 @@
 #ifndef NeatTest_0_1_genome_h
 #define NeatTest_0_1_genome_h
 
+#include "utils.h"
 #include "innovation.h"
 
 /*******************************************************************************
@@ -24,8 +25,8 @@ typedef struct genome {
   int iNumLinks;
   int iTotalLinks;
   //NeuralNet * sPhenotype;
-  //double dFitness;
-  //double dAjustedFitness;
+  double dFitness;
+  double dAjustedFitness;
   //double dAmountToSpawn;
   int iNumInputs, iNumOuputs;
 } sGenome;
@@ -39,7 +40,8 @@ sNeuronGene createNeuronGene(int id, neuron_type t, bool r, double x, double y);
 sLinkGene createLinkGene(int inov, int from, int to, double w, bool e, bool r);
 void genomeAddNeuron(sGenome * gen, sNeuronGene * ng);
 void genomeAddLink(sGenome * gen, sLinkGene * lg);
-sGenome createGenome(int id, int nbInputs, int nbOutputs);
+sGenome createInitialGenome(int id, int nbInputs, int nbOutputs);
+sGenome createEmptyGenome(int id, int nbInputs, int nbOutputs);
 void freeGenome(sGenome * gen);
 // convenient for debug - visualization
 void dumpGenome(sGenome gen);

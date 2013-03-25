@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "utils.h"
+#include <string.h>
 #include "genome.h"
 
 /*******************************************************************************
@@ -18,8 +18,8 @@
 
 /* Creates a neuron gene.
  */
-sNeuronGene
-createNeuronGene(int id, neuron_type type, bool r, double x, double y) {
+sNeuronGene createNeuronGene(int id, neuron_type type, bool r,
+                             double x, double y) {
   sNeuronGene ng;
   ng.iId = id;
   ng.eNeuronType = type;
@@ -32,8 +32,7 @@ createNeuronGene(int id, neuron_type type, bool r, double x, double y) {
 
 /* Creates a link gene.
  */
-sLinkGene
-createLinkGene(int innov, int from, int to, double w, bool e, bool r) {
+sLinkGene createLinkGene(int innov, int from, int to, double w, bool e, bool r){
   sLinkGene lg;
   lg.iInnovId = innov;
   lg.iFromNeuron = from;
@@ -45,8 +44,7 @@ createLinkGene(int innov, int from, int to, double w, bool e, bool r) {
   return lg;
 }
 
-void
-genomeAddNeuron(sGenome * gen, sNeuronGene * ng) {
+void genomeAddNeuron(sGenome * gen, sNeuronGene * ng) {
   if (gen->iNumNeurons == gen->iTotalNeurons) {
     gen->iTotalNeurons += INIT_VECT_SIZE;
     gen->vNeurons = realloc(gen->vNeurons,
@@ -55,8 +53,7 @@ genomeAddNeuron(sGenome * gen, sNeuronGene * ng) {
   gen->vNeurons[gen->iNumNeurons++] = *ng;
 }
 
-void
-genomeAddLink(sGenome * gen, sLinkGene * lg) {
+void genomeAddLink(sGenome * gen, sLinkGene * lg) {
   if (gen->iNumLinks == gen->iTotalLinks) {
     gen->iTotalLinks += INIT_VECT_SIZE;
     gen->vLinks = realloc(gen->vLinks,
@@ -68,10 +65,12 @@ genomeAddLink(sGenome * gen, sLinkGene * lg) {
 /* Creates a minimal genome where there are output + input neurons + bias
  * and each input neuron is connected to each output neuron.
  */
-sGenome
-createGenome(int id, int nbInputs, int nbOutputs) {
+sGenome createInitialGenome(int id, int nbInputs, int nbOutputs) {
   sGenome gen;
   gen.id = id;
+  // initialize fitness
+  gen.dFitness = 0;
+  gen.dAjustedFitness = 0;
   // remember number of inputs and outputs
   gen.iNumInputs = nbInputs;
   gen.iNumOuputs = nbOutputs;
@@ -117,10 +116,28 @@ createGenome(int id, int nbInputs, int nbOutputs) {
   return gen;
 }
 
+sGenome createEmptyGenome(int id, int nbInputs, int nbOutputs) {
+  sGenome gen;
+  gen.id = id;
+  // initialize fitness
+  gen.dFitness = 0;
+  gen.dAjustedFitness = 0;
+  // remember number of inputs and outputs
+  gen.iNumInputs = nbInputs;
+  gen.iNumOuputs = nbOutputs;
+  // init total and current number of neurons and links
+  gen.iTotalNeurons = gen.iTotalLinks = INIT_VECT_SIZE;
+  gen.iNumNeurons = gen.iNumLinks = 0;
+  // allocate memory for vectors of neurons and links
+  gen.vNeurons = calloc(gen.iTotalNeurons, sizeof(*(gen.vNeurons)));
+  gen.vLinks = calloc(gen.iTotalLinks, sizeof(*(gen.vLinks)));
+  return gen;
+}
+
+
 /* Frees memory allocated for the genome
  */
-void
-freeGenome(sGenome * gen) {
+void freeGenome(sGenome * gen) {
   free(gen->vNeurons);
   free(gen->vLinks);
 }

@@ -35,4 +35,5 @@ sParams loadConf(char * file);
 void error(char * format, char * message);
 char * loadString(char * prefix, FILE * fileref);
 void loadNumber(char * prefix, void * var, int type, FILE * fileref);
+
 #endif

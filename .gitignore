@@ -15,3 +15,11 @@
 *.exe
 *.out
 *.app
+
+*.dSYM
+*.DS_Store
+*.gitignore
+
+abalone_data/
+visualize/
+neattest

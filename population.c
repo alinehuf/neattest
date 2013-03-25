@@ -11,7 +11,7 @@
 #include "genome.h"
 #include "population.h"
 
-sGenome crossover(sGenome mum, sGenome dad) {
+sGenome crossover(sGenome mum, sGenome dad, int babyId) {
   typedef enum {MUM, DAD} parent_type;
   // first, calculate the genome we will using the disjoint/excess genes from.
   // This is the fittest genome.
@@ -34,14 +34,10 @@ sGenome crossover(sGenome mum, sGenome dad) {
   }
 
   // create en empty genome for the baby
-  sGenome baby = createEmptyGenome(0, mum.iNumInputs, mum.iNumOuputs);
-  // temporary vector to store all added node IDs
-  int * vBabyNeuronIds = calloc(INIT_VECT_SIZE, sizeof(*(vBabyNeuronIds)));
-  int numBabyNeurons = 0;
+  sGenome baby = createEmptyGenome(babyId, mum.iNumInputs, mum.iNumOuputs);
   // this will hold a copy of the gene we wish to add at each step
   sLinkGene selectedGene;
-  sNeuronGene ng;
-  sLinkGene lg;
+  parent_type selectedFrom;
 
   int curMum = 0;
   int curDad = 0;
@@ -51,32 +47,40 @@ sGenome crossover(sGenome mum, sGenome dad) {
     // the end of mum's genes have been reached
     if (curMum >= mum.iNumLinks && curDad < dad.iNumLinks) {
       // if dad is fittest
-      if (best == DAD) //add dads genes
+      if (best == DAD) { //add dads genes
         selectedGene = dad.vLinks[curDad];
+        selectedFrom = DAD;
+      }
       // move onto dad's next gene
       curDad++;
     }
     // the end of dads's genes have been reached
     else if ( curDad >= dad.iNumLinks && curMum < mum.iNumLinks) {
       // if mum is fittest
-      if (best == MUM) //add mums genes
+      if (best == MUM) { //add mums genes
         selectedGene = mum.vLinks[curMum];
+        selectedFrom = MUM;
+       }
       // move onto mum's next gene
       curMum++;
     }
     // if mums innovation number is less than dads
     else if (mum.vLinks[curMum].iInnovId < dad.vLinks[curDad].iInnovId) {
       // if mum is fittest add gene
-      if (best == MUM)
+      if (best == MUM) {
         selectedGene = mum.vLinks[curMum];
+        selectedFrom = MUM;
+      }
       // move onto mum's next gene
       curMum++;
     }
     // if dads innovation number is less than mums
     else if (dad.vLinks[curDad].iInnovId < mum.vLinks[curMum].iInnovId) {
       // if dad is fittest add gene
-      if (best == DAD)
+      if (best == DAD) {
         selectedGene = dad.vLinks[curDad];
+        selectedFrom = DAD;
+      }
       // move onto dad's next gene
       curDad++;
     }
@@ -84,10 +88,13 @@ sGenome crossover(sGenome mum, sGenome dad) {
     else if (mum.vLinks[curMum].iInnovId == dad.vLinks[curDad].iInnovId)
     {
       // grab a gene from either parent
-      if (randFloat() < 0.5f)
+      if (randFloat() < 0.5f) {
         selectedGene = mum.vLinks[curMum];
-      else
+        selectedFrom = MUM;
+      } else {
         selectedGene = dad.vLinks[curDad];
+        selectedFrom = DAD;
+      }
       // move onto next gene of each parent
       curMum++;
       curDad++;
@@ -100,29 +107,29 @@ sGenome crossover(sGenome mum, sGenome dad) {
 
     // Check if we already have the nodes referred to in SelectedGene.
     // If not, they need to be added.
-    if (idNotIntoVect(selectedGene.iFromNeuron, vBabyNeuronIds, numBabyNeurons))
-      vBabyNeuronIds[numBabyNeurons++] = selectedGene.iFromNeuron;
-    if (idNotIntoVect(selectedGene.iToNeuron, vBabyNeuronIds, numBabyNeurons))
-      vBabyNeuronIds[numBabyNeurons++] = selectedGene.iToNeuron;
-  }//end while
+    if (!alreadyHaveThisNeuronId(baby, selectedGene.iFromNeuron)) {
+      if (selectedFrom == MUM)
+        genomeAddNeuron(&baby,
+                   &mum.vNeurons[getNeuronPos(mum, selectedGene.iFromNeuron)] );
+      else
+        genomeAddNeuron(&baby,
+                   &dad.vNeurons[getNeuronPos(dad, selectedGene.iFromNeuron)] );
+    }
+    if (!alreadyHaveThisNeuronId(baby, selectedGene.iToNeuron)) {
+      if (selectedFrom == MUM)
+        genomeAddNeuron(&baby,
+                     &mum.vNeurons[getNeuronPos(mum, selectedGene.iToNeuron)] );
+      else
+        genomeAddNeuron(&baby,
+                     &dad.vNeurons[getNeuronPos(dad, selectedGene.iToNeuron)] );
+    }
+  } // end while
 
-  //now create the required nodes. First sort them into order
-  qsort(vBabyNeuronIds, numBabyNeurons, sizeof(int),
-        (int (*) (const void *, const void *)) cmpInt);
+  //now sort the neurons into order
+  qsort(baby.vNeurons, baby.iNumNeurons, sizeof(sNeuronGene),
+        (int (*) (const void *, const void *)) cmpNeuronsByIds);
 
-//  int i;
-//  for (i = 0; i < vBabyNeuronIds; i++)
-//    
-//    BabyNeurons.push_back(m_pInnovation->CreateNeuronFromID(vecNeurons[i]));
-//
-//  //finally, create the genome
-//  CGenome babyGenome(m_iNextGenomeID++,
-//                     BabyNeurons,
-//                     BabyGenes,
-//                     mum.NumInputs(),
-//                     mum.NumOutputs());
-
-  return babyGenome;
+  return baby;
 }
 
 /*******************************************************************************
@@ -137,8 +144,8 @@ bool idNotIntoVect(int id, int * vect, int size) {
   return TRUE;
 }
 
-int cmpInt(const int * a,const int * b) {
-  if (*a == *b) return 0;
-  else if (*a < *b) return -1;
+int cmpNeuronsByIds(const sNeuronGene * a, const sNeuronGene * b) {
+  if (a->iId == b->iId) return 0;
+  else if (a->iId < b->iId) return -1;
   else return 1;
 }

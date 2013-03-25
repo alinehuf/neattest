@@ -9,8 +9,8 @@
 #ifndef NeatTest_0_1_population_h
 #define NeatTest_0_1_population_h
 
-sGenome crossover(sGenome mum, sGenome dad);
+sGenome crossover(sGenome mum, sGenome dad, int babyId);
 bool idNotIntoVect(int id, int * vect, int size);
-int cmpInt(const int * a,const int * b);
+int cmpNeuronsByIds(const sNeuronGene * a, const sNeuronGene * b);
 
 #endif

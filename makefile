@@ -2,7 +2,7 @@
 #! /bin/sh
 
 DEBUG=yes
-SYSTEM=mac
+SYSTEM=linux
 
 CC = gcc
 ifeq ($(DEBUG),yes)
@@ -12,14 +12,15 @@ else
 endif
 
 ifeq ($(SYSTEM),win)
-	LIBS = -lGL -lGLU -lglut -lm -ljpeg       # win
+	#LIBS = -lGL -lGLU -lglut -lm -ljpeg       # win
 	CFLAGS += -DWIN
 else
 	ifeq ($(SYSTEM),linux)
-		LIBS = -lGL -lGLU -lglut -lm -ljpeg       # linux
+		#LIBS = -lGL -lGLU -lglut -lm -ljpeg       # linux
+		LIBS = -lm
 		CFLAGS += -DLINUX
 	else
-		LIBS = -framework Glut -framework OpenGL  # mac
+		#LIBS = -framework Glut -framework OpenGL  # mac
     CFLAGS += -DMAC
 	endif
 endif

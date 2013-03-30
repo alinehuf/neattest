@@ -19,7 +19,7 @@ int checkInnovation(sInnovTable * innovTable, int in, int out, innov_type type){
          innovTable->vInnovs[i].iNeuronOut == out &&
          innovTable->vInnovs[i].eInnovType == type ) {
 			//found a match so assign this innovation number to id
-			return innovTable->vInnovs[i].iInnovId;
+			return i;
 		}
   }
   return -1;
@@ -44,7 +44,7 @@ int createNewInnov(sInnovTable * innovTable, int in, int out, innov_type type,
                      innovTable->iTotalInnovs * sizeof(*(innovTable->vInnovs)));
   }
   innovTable->vInnovs[innovTable->iNumInnovs++] = innov;
-  return innov.iInnovId;
+  return innov.iNeuronId;
 }
 
 sInnovTable createNewInnovTable( sNeuronGene * neurons, int numNeurons,

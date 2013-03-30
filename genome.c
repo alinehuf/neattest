@@ -422,8 +422,8 @@ void addNeuron(sGenome * gen, double dChanceAddNode, sInnovTable * innovTable,
     // occurred
     if (idLink1 < 0 || idLink2 < 0) {
       fprintf(stderr, "addNeuron() : error links around a neurons unknown in " \
-                      "innovTable");
-      return;
+                      "innovTable\n");
+      exit(EXIT_FAILURE);
     }
     //now we need to create 2 new genes to represent the new links
     sLinkGene link1 = createLinkGene(idLink1, from, neuron_id, 1.0, TRUE,FALSE);

@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "params.h"
 #include "genome.h"
 #include "population.h"
 
@@ -43,7 +42,8 @@ main(int argc, char * argv[])
   puts("------------MUTATION--------");
   dumpGenome(gen1);
   dumpGenome(gen2);
-
+  printf("compatibility : %f \n",
+         getCompatibilityScore(gen1, gen2, params));
   sGenome gen3 = crossover(gen1, gen2, 2);
   puts("------------CROSSOVER--------");
   dumpGenome(gen3);

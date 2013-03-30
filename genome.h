@@ -11,6 +11,7 @@
 
 #include "utils.h"
 #include "innovation.h"
+#include "params.h"
 
 /*******************************************************************************
  * genome
@@ -56,6 +57,9 @@ void addLink(sGenome * gen, double mutationRate, double chanceOfLooped,
              int numTrysToAddLink);
 void addNeuron(sGenome * gen, double mutationRate, sInnovTable * innovTable,
                int numTrysToFindOldLink);
+// genome compatibility distance
+double getCompatibilityScore(const sGenome gen1, const sGenome gen2,
+                                                               const sParams p);
 // tools to manipulate the genome
 int getNeuronPos(sGenome gen, const int id);
 bool duplicateLink(sGenome gen, const int neuron_id1, const int neuron_id2);

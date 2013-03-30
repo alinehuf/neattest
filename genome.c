@@ -134,7 +134,6 @@ sGenome createEmptyGenome(int id, int nbInputs, int nbOutputs) {
   return gen;
 }
 
-
 /* Frees memory allocated for the genome
  */
 void freeGenome(sGenome * gen) {
@@ -186,7 +185,7 @@ void dumpGenome(sGenome gen) {
 }
 
 /*******************************************************************************
- * mutations : weight and sigmoidCurvature mutation, add node or add link
+ * mutations : weight and sigmoidCurvature mutation
  ******************************************************************************/
 
 void mutateWeigth(sGenome * gen, double weightMutationRate,
@@ -218,6 +217,10 @@ void mutateActivationResponse(sGenome * gen, double activationMutationRate,
       gen->vNeurons[i].dSigmoidCurvature += randClamped() * maxActivPertubation;
   }
 }
+
+/*******************************************************************************
+ * mutations : add node or add link
+ ******************************************************************************/
 
 void addLink(sGenome * gen, double chanceAddLink, double chanceAddRecurrentLink,
              sInnovTable * innovTable, int numTrysToFindLoop,
@@ -440,9 +443,78 @@ void addNeuron(sGenome * gen, double dChanceAddNode, sInnovTable * innovTable,
 }
 
 /*******************************************************************************
- * tools to manipulate the genome
+ * genome compatibility distance
  ******************************************************************************/
 
+/* this function returns a score based on the compatibility of two genomes
+ */
+double getCompatibilityScore(const sGenome gen1, const sGenome gen2,
+                                                               const sParams p){
+  // travel down the length of each genome counting the number of
+  // disjoint genes, the number of excess genes and the number of
+  // matched genes
+  double numDisjoint = 0;
+  double numExcess = 0;
+  double numMatched = 0;
+
+  // this records the summed difference of weights in matched genes
+  double	weightDiff = 0;
+
+  // position holders for each genome. They are incremented as we
+  // step down each genomes length.
+  int g1 = 0;
+  int g2 = 0;
+
+  // while one of the genomes is not completely read
+  while (g1 < gen1.iNumLinks - 1 || g2 < gen2.iNumLinks - 1) {
+    // we've reached the end of genome1 but not genome2 so increment
+    // the excess score
+    if (g1 == gen1.iNumLinks - 1) {
+      g2++;
+      numExcess++;
+      continue;
+    }
+    // and vice versa
+    if (g2 == gen2.iNumLinks - 1) {
+      g1++;
+      numExcess++;
+      continue;
+    }
+    // get innovation numbers for each gene at this point
+    int id1 = gen1.vLinks[g1].iInnovId;
+    int id2 = gen2.vLinks[g2].iInnovId;
+    // innovation numbers are identical so increase the matched score
+    if (id1 == id2) {
+      g1++;
+      g2++;
+      numMatched++;
+      // get the weight difference between these two genes
+      weightDiff += fabs(gen1.vLinks[g1].dWeight - gen2.vLinks[g2].dWeight);
+    }
+    // innovation numbers are different so increment the disjoint score
+    else if (id1 < id2) {
+      numDisjoint++;
+      g1++;
+    } else { // (id1 > id2)
+      numDisjoint++;
+      g2++;
+    }
+  } // end while
+
+  //get the length of the longest genome
+  int longest = gen2.iNumLinks;
+  if (gen1.iNumLinks > longest) longest = gen1.iNumLinks;
+
+  //finally calculate the scores
+  double score = (p.dExcessGenesCoef * numExcess / (double) longest) +
+                 (p.dDisjointGenesCoef * numDisjoint / (double) longest) +
+                 (p.dWeightDiffCoef * weightDiff / numMatched);
+  return score;
+}
+
+/*******************************************************************************
+ * tools to manipulate the genome
+ ******************************************************************************/
 
 // returns true if the link is already part of the genome
 bool duplicateLink(sGenome gen, const int neuron_id1, const int neuron_id2) {

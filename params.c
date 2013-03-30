@@ -51,22 +51,34 @@ sParams loadConf(char * file) {
              DOUBLE_TYPE, fileref);
   loadNumber("iNumTrysToFindOldLink", &params.iNumTrysToFindOldLink,
              INT_TYPE, fileref);
-
+  loadNumber("dCompatibilityThreshold", &params.dCompatibilityThreshold,
+             DOUBLE_TYPE, fileref);
+  loadNumber("dExcessGenesCoef", &params.dExcessGenesCoef,
+             DOUBLE_TYPE, fileref);
+  loadNumber("dDisjointGenesCoef", &params.dDisjointGenesCoef,
+             DOUBLE_TYPE, fileref);
+  loadNumber("dWeightDiffCoef", &params.dWeightDiffCoef,
+             DOUBLE_TYPE, fileref);
+  
   fclose(fileref);
 
   // dump
   puts("------------ parameters :");
-  printf("dWeightMutationRate : %f\n", params.dWeightMutationRate);
-  printf("dMaxWeightPerturbation : %f\n", params.dMaxWeightPerturbation);
+  printf("dWeightMutationRate :        %f\n", params.dWeightMutationRate);
+  printf("dMaxWeightPerturbation :     %f\n", params.dMaxWeightPerturbation);
   printf("dProbabilityWeightReplaced : %f\n",params.dProbabilityWeightReplaced);
-  printf("dActivationMutationRate : %f\n", params.dActivationMutationRate);
+  printf("dActivationMutationRate :    %f\n", params.dActivationMutationRate);
   printf("dMaxActivationPerturbation : %f\n",params.dMaxActivationPerturbation);
-  printf("dChanceAddLink : %f\n", params.dChanceAddLink);
-  printf("dChanceAddRecurrentLink : %f\n", params.dChanceAddRecurrentLink);
-  printf("iNumTrysToFindLoop : %d\n", params.iNumTrysToFindLoop);
-  printf("iNumTrysToAddLink : %d\n", params.iNumTrysToAddLink);
-  printf("dChanceAddNode : %f\n", params.dChanceAddNode);
-  printf("iNumTrysToFindOldLink : %d\n", params.iNumTrysToFindOldLink);
+  printf("dChanceAddLink :             %f\n", params.dChanceAddLink);
+  printf("dChanceAddRecurrentLink :    %f\n", params.dChanceAddRecurrentLink);
+  printf("iNumTrysToFindLoop :         %d\n", params.iNumTrysToFindLoop);
+  printf("iNumTrysToAddLink :          %d\n", params.iNumTrysToAddLink);
+  printf("dChanceAddNode :             %f\n", params.dChanceAddNode);
+  printf("iNumTrysToFindOldLink :      %d\n", params.iNumTrysToFindOldLink);
+  printf("dCompatibilityThreshold :    %f\n", params.dCompatibilityThreshold);
+  printf("dExcessGenesCoef :           %f\n", params.dExcessGenesCoef);
+  printf("dDisjointGenesCoef :         %f\n", params.dDisjointGenesCoef);
+  printf("dWeightDiffCoef :            %f\n", params.dWeightDiffCoef);
   puts("-------------------------");
   
   return params;

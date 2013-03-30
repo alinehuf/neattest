@@ -25,6 +25,11 @@ typedef struct {
   // mutation by adding a node
   double dChanceAddNode;
   int iNumTrysToFindOldLink;
+  // speciation compatibility distance
+  double dCompatibilityThreshold;
+  double dExcessGenesCoef;
+  double dDisjointGenesCoef;
+  double dWeightDiffCoef;
 } sParams;
 
 /*******************************************************************************

@@ -12,23 +12,24 @@
 #include "utils.h"
 #include "innovation.h"
 #include "params.h"
+#include "phenotype.h"
 
 /*******************************************************************************
  * genome
  ******************************************************************************/
 
 typedef struct genome {
-  int id;
+  int iId;
   sNeuronGene * vNeurons;
   int iNumNeurons;
   int iTotalNeurons;
   sLinkGene * vLinks;
   int iNumLinks;
   int iTotalLinks;
-  //NeuralNet * sPhenotype;
+  sPhenotype * pPhenotype;
   double dFitness;
   double dAjustedFitness;
-  //double dAmountToSpawn;
+  double dAmountToSpawn;
   int iNumInputs, iNumOuputs;
 } sGenome;
 
@@ -58,10 +59,16 @@ void addLink(sGenome * gen, double mutationRate, double chanceOfLooped,
 void addNeuron(sGenome * gen, double mutationRate, sInnovTable * innovTable,
                int numTrysToFindOldLink);
 // genome compatibility distance
-double getCompatibilityScore(const sGenome gen1, const sGenome gen2,
-                                                               const sParams p);
+double getCompatibilityScore(const sGenome gen1,const sGenome gen2,sParams * p);
 // tools to manipulate the genome
 int getNeuronPos(sGenome gen, const int id);
 bool duplicateLink(sGenome gen, const int neuron_id1, const int neuron_id2);
 bool alreadyHaveThisNeuronId(sGenome gen, const int id);
+
+
+sPhenotype * createPhenotype(sGenome * gen, int depth);
+void deletePhenotype(sGenome * gen);
+
 #endif
+
+

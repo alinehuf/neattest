@@ -43,14 +43,14 @@ main(int argc, char * argv[])
   dumpGenome(gen1);
   dumpGenome(gen2);
   printf("compatibility : %f \n",
-         getCompatibilityScore(gen1, gen2, params));
-  sGenome gen3 = crossover(gen1, gen2, 2);
+         getCompatibilityScore(gen1, gen2, &params));
+  sGenome gen3 = crossover(gen1, gen2);
+  gen3.iId = 2;
   puts("------------CROSSOVER--------");
   dumpGenome(gen3);
   
   puts("------------INNOVATIONS--------");
   dumpInnovTable(innovTable);
-
   
   // free memory
   freeGenome(&gen1);

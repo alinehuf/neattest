@@ -59,6 +59,28 @@ sParams loadConf(char * file) {
              DOUBLE_TYPE, fileref);
   loadNumber("dWeightDiffCoef", &params.dWeightDiffCoef,
              DOUBLE_TYPE, fileref);
+  loadNumber("iMaxSpecies", &params.iMaxSpecies,
+             INT_TYPE, fileref);
+  loadNumber("iYoungBonusAgeThreshhold", &params.iYoungBonusAgeThreshhold,
+             INT_TYPE, fileref);
+  loadNumber("dYoungFitnessBonus", &params.dYoungFitnessBonus,
+             DOUBLE_TYPE, fileref);
+  loadNumber("iOldAgeThreshold", &params.iOldAgeThreshold,
+             INT_TYPE, fileref);
+  loadNumber("dOldAgePenalty", &params.dOldAgePenalty,
+             DOUBLE_TYPE, fileref);
+  loadNumber("dSurvivalRate", &params.dSurvivalRate,
+             DOUBLE_TYPE, fileref);
+  loadNumber("dCrossoverRate", &params.dCrossoverRate,
+             DOUBLE_TYPE, fileref);
+  loadNumber("iNumTrysToFindMate", &params.iNumTrysToFindMate,
+             INT_TYPE, fileref);
+  loadNumber("iNumGensAllowedNoImprov", &params.iNumGensAllowedNoImprov,
+             INT_TYPE, fileref);
+  loadNumber("iNumIndividuals", &params.iNumIndividuals,
+             INT_TYPE, fileref);
+  loadNumber("iNumEpoch", &params.iNumEpoch,
+             INT_TYPE, fileref);
   
   fclose(fileref);
 
@@ -79,8 +101,19 @@ sParams loadConf(char * file) {
   printf("dExcessGenesCoef :           %f\n", params.dExcessGenesCoef);
   printf("dDisjointGenesCoef :         %f\n", params.dDisjointGenesCoef);
   printf("dWeightDiffCoef :            %f\n", params.dWeightDiffCoef);
+  printf("iMaxSpecies :                %d\n", params.iMaxSpecies);
+  printf("iYoungBonusAgeThreshhold     %d\n", params.iYoungBonusAgeThreshhold);
+  printf("dYoungFitnessBonus :         %f\n", params.dYoungFitnessBonus);
+  printf("iOldAgeThreshold :           %d\n", params.iOldAgeThreshold);
+  printf("dOldAgePenalty :             %f\n", params.dOldAgePenalty);
+  printf("dSurvivalRate :              %f\n", params.dSurvivalRate);
+  printf("dCrossoverRate :             %f\n", params.dCrossoverRate);
+  printf("iNumTrysToFindMate :         %d\n", params.iNumTrysToFindMate);
+  printf("iNumGensAllowedNoImprov :    %d\n", params.iNumGensAllowedNoImprov);
+  printf("iNumIndividuals :            %d\n", params.iNumIndividuals);
+  printf("iNumEpoch :                  %d\n", params.iNumEpoch);
   puts("-------------------------");
-  
+
   return params;
 }
 

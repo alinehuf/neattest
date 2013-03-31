@@ -1,4 +1,6 @@
 neattest
 ========
 
-test d'implémentation de NEAT en C (Stanley & Miikkulainen) calqué sur le code en C++ de Mat Buckland and "IA techniques for game programming"
+implementation test of NEAT (Stanley & Miikkulainen) in C, modeled after the code in C++ by Mat Buckland in "AI techniques for game programming"
+
+test d'implémentation de NEAT (Stanley & Miikkulainen) en C, calqué sur le code en C++ de Mat Buckland dans "IA techniques for game programming"

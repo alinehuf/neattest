@@ -40,7 +40,6 @@ sLinkGene createLinkGene(int innov, int from, int to, double w, bool e, bool r){
   lg.dWeight = w;
   lg.bEnabled = e;
   lg.bRecurrent = r;
-
   return lg;
 }
 
@@ -67,7 +66,7 @@ void genomeAddLink(sGenome * gen, sLinkGene * lg) {
  */
 sGenome createInitialGenome(int id, int nbInputs, int nbOutputs) {
   sGenome gen;
-  gen.id = id;
+  gen.iId = id;
   // initialize fitness
   gen.dFitness = 0;
   gen.dAjustedFitness = 0;
@@ -118,7 +117,7 @@ sGenome createInitialGenome(int id, int nbInputs, int nbOutputs) {
 
 sGenome createEmptyGenome(int id, int nbInputs, int nbOutputs) {
   sGenome gen;
-  gen.id = id;
+  gen.iId = id;
   // initialize fitness
   gen.dFitness = 0;
   gen.dAjustedFitness = 0;
@@ -148,7 +147,7 @@ void freeGenome(sGenome * gen) {
 /* dump genome */
 void dumpGenome(sGenome gen) {
   printf("genome %d (%d inputs, %d outputs, %d nodes, %d links) :\n",
-        gen.id, gen.iNumInputs, gen.iNumOuputs, gen.iNumNeurons, gen.iNumLinks);
+       gen.iId, gen.iNumInputs, gen.iNumOuputs, gen.iNumNeurons, gen.iNumLinks);
   int i;
   for (i = 0; i < gen.iNumNeurons; i++) {
     printf("Neurons %-2d - id=%-2d : ", i,
@@ -448,8 +447,7 @@ void addNeuron(sGenome * gen, double dChanceAddNode, sInnovTable * innovTable,
 
 /* this function returns a score based on the compatibility of two genomes
  */
-double getCompatibilityScore(const sGenome gen1, const sGenome gen2,
-                                                               const sParams p){
+double getCompatibilityScore(const sGenome gen1,const sGenome gen2,sParams * p){
   // travel down the length of each genome counting the number of
   // disjoint genes, the number of excess genes and the number of
   // matched genes
@@ -506,9 +504,9 @@ double getCompatibilityScore(const sGenome gen1, const sGenome gen2,
   if (gen1.iNumLinks > longest) longest = gen1.iNumLinks;
 
   //finally calculate the scores
-  double score = (p.dExcessGenesCoef * numExcess / (double) longest) +
-                 (p.dDisjointGenesCoef * numDisjoint / (double) longest) +
-                 (p.dWeightDiffCoef * weightDiff / numMatched);
+  double score = (p->dExcessGenesCoef * numExcess / (double) longest) +
+                 (p->dDisjointGenesCoef * numDisjoint / (double) longest) +
+                 (p->dWeightDiffCoef * weightDiff / numMatched);
   return score;
 }
 
@@ -548,3 +546,65 @@ bool alreadyHaveThisNeuronId(sGenome gen, const int id) {
   return FALSE;
 }
 
+/*******************************************************************************
+ * creation / deletion of the phenotype corresponding to a genotype
+ ******************************************************************************/
+
+
+/* creates a neural network based upon the information in the genome.
+ * returns a pointer to the newly created ANN
+ */
+
+sPhenotype * createPhenotype(sGenome * gen, int depth) {
+  //first make sure there is no existing phenotype for this genome
+  deletePhenotype(gen);
+
+  // allocate the new phenotype
+  gen->pPhenotype = (sPhenotype *) malloc(sizeof(*gen->pPhenotype));
+
+  // this will hold all the neurons required for the phenotype
+  gen->pPhenotype->vNeurons =
+  (sNeuron *) calloc(gen->iNumNeurons, sizeof(*gen->pPhenotype->vNeurons));
+  gen->pPhenotype->iNumNeurons = gen->iNumNeurons;
+  gen->pPhenotype->iDepth = depth;
+
+  // first, create all the required neurons
+  int i;
+  for (i = 0; i < gen->iNumNeurons; i++)
+    gen->pPhenotype->vNeurons[i] = createNeuron(gen->vNeurons[i].eNeuronType,
+                                                gen->vNeurons[i].iId,
+                                                gen->vNeurons[i].dSplitY,
+                                                gen->vNeurons[i].dSplitX,
+                                                gen->vNeurons[i].dSigmoidCurvature);
+  // now to create the links.
+  for (i = 0; i < gen->iNumLinks; i++) {
+    // make sure the link gene is enabled before the connection is created
+    if (gen->vLinks[i].bEnabled) {
+      // get the pointers to the relevant neurons
+      int neuronPos = getNeuronPos(*gen, gen->vLinks[i].iFromNeuron);
+      sNeuron * fromNeuron = &gen->pPhenotype->vNeurons[neuronPos];
+
+      neuronPos = getNeuronPos(*gen, gen->vLinks[i].iToNeuron);
+      sNeuron * toNeuron = &gen->pPhenotype->vNeurons[neuronPos];
+
+      // create a link between those two neurons and assign the weight stored
+      // in the gene
+      sLink tmpLink = createLink(gen->vLinks[i].dWeight, fromNeuron, toNeuron,
+                                 gen->vLinks[i].bRecurrent);
+      //add new links to neuron
+      phenotypeAddLinkIn(fromNeuron, &tmpLink);
+      phenotypeAddLinkOut(toNeuron, &tmpLink);
+    }
+  }
+  return gen->pPhenotype;
+}
+
+void deletePhenotype(sGenome * gen) {
+  int i;
+  for (i = 0; i < gen->pPhenotype->iNumNeurons; i++) {
+    free(gen->pPhenotype->vNeurons[i].vLinksIn);
+    free(gen->pPhenotype->vNeurons[i].vLinksOut);
+  }
+  free(gen->pPhenotype->vNeurons);
+  free(gen->pPhenotype);
+}

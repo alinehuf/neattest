@@ -9,15 +9,12 @@
 #ifndef NeatTest_0_1_genes_h
 #define NeatTest_0_1_genes_h
 
-typedef enum {FALSE=0, TRUE} bool;
+#include "global.h"
+#include "utils.h"
 
 /*******************************************************************************
  * neuron gene
  ******************************************************************************/
-
-// NONE type is used into Innovation table when a link is specified, neuron type
-// is then not usefull
-typedef enum {INPUT, HIDDEN, OUTPUT, BIAS, NONE} neuron_type;
 
 // dSliptX, dSplitY : usefull for graphic representation of the genotype and
 // also to determines if a link is reccurent

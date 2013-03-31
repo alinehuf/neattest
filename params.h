@@ -30,6 +30,21 @@ typedef struct {
   double dExcessGenesCoef;
   double dDisjointGenesCoef;
   double dWeightDiffCoef;
+  // speciation distribution
+  int iMaxSpecies;
+  int iYoungBonusAgeThreshhold;
+  double dYoungFitnessBonus;
+  int iOldAgeThreshold;
+  double dOldAgePenalty;
+  // spawn
+  double dSurvivalRate;
+  double dCrossoverRate;
+  int iNumTrysToFindMate;
+  // population
+  int iNumGensAllowedNoImprov;
+  //global
+  int iNumIndividuals;
+  int iNumEpoch;
 } sParams;
 
 /*******************************************************************************

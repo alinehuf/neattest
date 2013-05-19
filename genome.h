@@ -20,10 +20,10 @@
 
 typedef struct genome {
   int iId;
-  sNeuronGene * vNeurons;
+  sNeuronGene ** vNeurons;
   int iNumNeurons;
   int iTotalNeurons;
-  sLinkGene * vLinks;
+  sLinkGene ** vLinks;
   int iNumLinks;
   int iTotalLinks;
   sPhenotype * pPhenotype;
@@ -38,15 +38,20 @@ typedef struct genome {
  ******************************************************************************/
 
 // neurons, links and genome creation
-sNeuronGene createNeuronGene(int id, neuron_type t, bool r, double x, double y);
-sLinkGene createLinkGene(int inov, int from, int to, double w, bool e, bool r);
+sNeuronGene * createNeuronGene(int id, neuron_type t, bool r,
+                               double x, double y);
+sNeuronGene * copyNeuronGene(sNeuronGene * neuron);
+sLinkGene * createLinkGene(int inov, int from, int to, double w, bool e,bool r);
+sLinkGene * copyLinkGene(sLinkGene * link);
 void genomeAddNeuron(sGenome * gen, sNeuronGene * ng);
 void genomeAddLink(sGenome * gen, sLinkGene * lg);
-sGenome createInitialGenome(int id, int nbInputs, int nbOutputs);
-sGenome createEmptyGenome(int id, int nbInputs, int nbOutputs);
+sGenome * createInitialGenome(int id, int nbInputs, int nbOutputs);
+sGenome * createEmptyGenome(int id, int nbInputs, int nbOutputs);
+sGenome * copyGenome(sGenome * model);
 void freeGenome(sGenome * gen);
+
 // convenient for debug - visualization
-void dumpGenome(sGenome gen);
+void dumpGenome(sGenome * gen);
 // mutations : weight and sigmoidCurvature mutation, add node or add link
 void mutateWeigth(sGenome * gen, double weightMutationRate,
                   double probabilityWeightReplaced,
@@ -59,15 +64,15 @@ void addLink(sGenome * gen, double mutationRate, double chanceOfLooped,
 void addNeuron(sGenome * gen, double mutationRate, sInnovTable * innovTable,
                int numTrysToFindOldLink);
 // genome compatibility distance
-double getCompatibilityScore(const sGenome gen1,const sGenome gen2,sParams * p);
+double getCompatibilityScore(sGenome * gen1, sGenome * gen2, sParams * p);
 // tools to manipulate the genome
-int getNeuronPos(sGenome gen, const int id);
-bool duplicateLink(sGenome gen, const int neuron_id1, const int neuron_id2);
-bool alreadyHaveThisNeuronId(sGenome gen, const int id);
+int getNeuronPos(sGenome * gen, const int id);
+bool duplicateLink(sGenome * gen, const int neuron_id1, const int neuron_id2);
+bool alreadyHaveThisNeuronId(sGenome * gen, const int id);
 
-
+// create / freePhenotype
 sPhenotype * createPhenotype(sGenome * gen, int depth);
-void deletePhenotype(sGenome * gen);
+void freePhenotype(sGenome * gen);
 
 #endif
 

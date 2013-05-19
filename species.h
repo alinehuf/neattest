@@ -12,8 +12,8 @@
 #include "genome.h"
 
 typedef struct {
-  sGenome sLeader;    // keep a local copy of the first member of this species
-  sGenome* * vMembers; // pointers to all the genomes within this species
+  sGenome * sLeader;   // keep a local copy of the first member of this species
+  sGenome ** vMembers; // pointers to all the genomes within this species
   int iNumMembers;
   int iTotalMembers;
   int iSpeciesId;      // the species needs an identification number
@@ -36,10 +36,12 @@ void addMember(sSpecies * spec, sGenome * newMember);
 void purgeSpecies(sSpecies * spec);
 void adjustFitnesses(sSpecies * spec, sParams * param);
 void speciesSpawnAmount(sSpecies * spec);
-sGenome randomSpawn(sSpecies * spec, double dSurvivalRate);
+sGenome * randomAmongBest(sSpecies * spec, double dSurvivalRate);
 // doubly linked list of species
 listSpecies * addOneSpecies(listSpecies * lastSpec, sGenome * firstOrg,
                                             int speciesId, int iNumIndividuals);
 listSpecies * removeOneSpecies(listSpecies * curSpec);
+// convenient for debug
+void dumpSpecies(listSpecies * listSpec);
 
 #endif

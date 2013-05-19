@@ -21,7 +21,7 @@
  */
 sSpecies * createSpecies(sGenome * firstOrg,int speciesId, int iNumIndividuals){
   sSpecies * spec = (sSpecies *) malloc(sizeof(*spec));
-  spec->sLeader = *firstOrg;
+  spec->sLeader = copyGenome(firstOrg);
   spec->vMembers = (sGenome* *) calloc(iNumIndividuals,sizeof(*spec->vMembers));
   spec->vMembers[0] = firstOrg;
   spec->iNumMembers = 1;
@@ -40,9 +40,10 @@ sSpecies * createSpecies(sGenome * firstOrg,int speciesId, int iNumIndividuals){
 void addMember(sSpecies * spec, sGenome * newMember) {
   //is the new member's fitness better than the best fitness?
   if (newMember->dFitness > spec->dBestFitness) {
+    freeGenome(spec->sLeader);
     spec->dBestFitness = newMember->dFitness;
     spec->iGensNoImprovement = 0;
-    spec->sLeader = *newMember;
+    spec->sLeader = copyGenome(newMember);
   }
   spec->vMembers[spec->iNumMembers++] = newMember;
 }
@@ -92,13 +93,13 @@ void speciesSpawnAmount(sSpecies * spec) {
 
 /* returns a random genome selected from the best individuals
  */
-sGenome randomSpawn(sSpecies * spec, double dSurvivalRate) {
-  sGenome baby;
-  if (spec->iNumMembers == 1) baby = *spec->vMembers[0];
+sGenome * randomAmongBest(sSpecies * spec, double dSurvivalRate) {
+  sGenome * baby;
+  if (spec->iNumMembers == 1) baby = spec->vMembers[0];
   else {
     int maxIndexSize = (int) (dSurvivalRate * spec->iNumMembers) + 1;
     int theOne = randInt(0, maxIndexSize);
-    baby = *spec->vMembers[theOne];
+    baby = spec->vMembers[theOne];
   }
   return baby;
 }
@@ -107,14 +108,13 @@ sGenome randomSpawn(sSpecies * spec, double dSurvivalRate) {
  * manipulation of doubly linked list of species
  ******************************************************************************/
 
-listSpecies * addOneSpecies(listSpecies * lastSpec, sGenome * firstOrg,
-                                           int speciesId, int iNumIndividuals) {
+listSpecies * addOneSpecies(listSpecies * listSpec, sGenome * firstOrg,
+                            int speciesId, int iNumIndividuals) {
   sSpecies * newSpec = createSpecies(firstOrg, speciesId, iNumIndividuals);
   listSpecies * newSlot = (listSpecies *) malloc(sizeof(*newSlot));
   newSlot->sSpecies = newSpec;
-  newSlot->prev = lastSpec;
-  newSlot->next = NULL;
-  lastSpec->next = newSlot;
+  newSlot->prev = NULL;
+  newSlot->next = listSpec;
   return newSlot;
 }
 
@@ -123,7 +123,25 @@ listSpecies * removeOneSpecies(listSpecies * curSpec) {
   curSpec->next ->prev= curSpec->prev;
   listSpecies * next = curSpec->next;
   free(curSpec->sSpecies->vMembers);
+  free(curSpec->sSpecies->sLeader);
   free(curSpec->sSpecies);
   free(curSpec);
   return next;
+}
+
+/*******************************************************************************
+ * dump species - convenient for debug
+ ******************************************************************************/
+
+void dumpSpecies(listSpecies * listSpec) {
+  puts("-------list of species :");
+  while (listSpec != NULL) {
+    printf("species %d - age %d - no improvement since %d generations - "
+           "%d members - best fitness : %f - spawn : %f - leader : genome %d\n",
+           listSpec->sSpecies->iSpeciesId, listSpec->sSpecies->iAge,
+           listSpec->sSpecies->iGensNoImprovement,
+           listSpec->sSpecies->iNumMembers, listSpec->sSpecies->dBestFitness,
+           listSpec->sSpecies->dSpawnsRqd, listSpec->sSpecies->sLeader->iId);
+    listSpec = listSpec->next;
+  }
 }

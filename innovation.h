@@ -31,7 +31,7 @@ typedef struct {
  ******************************************************************************/
 
 typedef struct {
-  sInnovation * vInnovs;
+  sInnovation ** vInnovs;
   int iNumInnovs;
   int iTotalInnovs;
   int iNextNeuronId;
@@ -44,8 +44,9 @@ typedef struct {
 int checkInnovation(sInnovTable * innovTable, int in, int out, innov_type type);
 int createNewInnov(sInnovTable * innovTable, int in, int out, innov_type type,
                    neuron_type ntype);
-sInnovTable createNewInnovTable(sNeuronGene * neurons, int numGenes,
-                                sLinkGene * links, int numLinks);
-void dumpInnovTable(sInnovTable innovTable);
+sInnovTable * createNewInnovTable( sNeuronGene ** neurons, int numNeurons,
+                                  sLinkGene ** links, int numLinks );
+void freeInnovTable(sInnovTable * innovTable);
+void dumpInnovTable(sInnovTable * innovTable);
 
 #endif

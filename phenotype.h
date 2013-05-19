@@ -11,6 +11,8 @@
 
 #include "global.h"
 
+typedef enum {SNAPSHOT, ACTIVE} run_type;
+
 typedef struct neuron sNeuron;
 
 /*******************************************************************************
@@ -35,10 +37,10 @@ struct neuron {
   int iID;                    // its identification number
   neuron_type eNeuronType;    // what type of neuron is this?
   double dActivationResponse; // sets the curvature of the sigmoid function
-  sLink * vLinksIn;           // all the links coming into this neuron
+  sLink ** vLinksIn;          // all the links coming into this neuron
   int iNumLinksIn;
   int iTotalLinksIn;
-  sLink * vLinksOut;          // and out
+  sLink ** vLinksOut;         // and out
   int iNumLinksOut;
   int iTotalLinksOut;
   double dSumActivation;      // sum of weights x inputs
@@ -53,7 +55,7 @@ struct neuron {
  ******************************************************************************/
 
 typedef struct {
-  sNeuron * vNeurons;
+  sNeuron ** vNeurons;
   int iNumNeurons;
   int iDepth; //the depth of the network
 } sPhenotype;
@@ -62,9 +64,13 @@ typedef struct {
  * prototypes
  ******************************************************************************/
 
-sNeuron createNeuron(int id, neuron_type type, double x, double y, double act);
-sLink createLink(double weight, sNeuron * in, sNeuron * out, bool rec);
+sNeuron * createNeuron(int id, neuron_type type, double x, double y, double act);
+sLink * createLink(double weight, sNeuron * in, sNeuron * out, bool rec);
 void phenotypeAddLinkOut(sNeuron * neuron, sLink * tmpLink);
 void phenotypeAddLinkIn(sNeuron * neuron, sLink * tmpLink);
+double * updateANNresponse(sPhenotype * phen, double * inputs, int nbInputs,
+                             int nbOutputs, run_type type);
+double sigmoid(double netinput, double activationResponse);
+void dumpPhenotype(sPhenotype * phen, int idx);
 
 #endif

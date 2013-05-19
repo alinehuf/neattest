@@ -30,7 +30,6 @@ testBase * loadData(const char * filename) {
   data->iMaxFinalStates = INIT_DATA_VECT_SIZE;
   data->vAllFinalStates = (finalState* *)
                  malloc(INIT_DATA_VECT_SIZE * sizeof(*(data->vAllFinalStates)));
-
   int i;
   int idxFact = -1;
   char lineBuffer[BUFSIZ];            // a line of the data file
@@ -64,6 +63,7 @@ testBase * loadData(const char * filename) {
     }
     addFinalState(fstate, data);
   }
+  fclose(fileref);
   return data;
 }
 

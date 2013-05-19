@@ -201,7 +201,6 @@ sGenome * copyGenome(sGenome * model) {
  */
 void freeGenome(sGenome * gen) {
   int i;
-  printf("freeing genome %d\n", gen->iId);
   if (gen->pPhenotype != NULL) freePhenotype(gen);
   for (i = 0; i < gen->iNumNeurons; i++) free(gen->vNeurons[i]);
   free(gen->vNeurons);

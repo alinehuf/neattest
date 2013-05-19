@@ -104,7 +104,7 @@ void epoch(sPopulation * pop, double * fitnessScores, int size) {
   // separate the population into species of similar topology, adjust
   // fitnesses and calculate spawn levels
   speciateAndCalculateSpawnLevels(pop);
-  if (UltraVerbose) dumpSpecies(pop->listSpecies);
+  dumpSpecies(pop->listSpecies);
 
   // this will hold the new population of genomes
   sGenome ** newGenomes = calloc( pop->sParams->iNumIndividuals,
@@ -133,7 +133,6 @@ void epoch(sPopulation * pop, double * fitnessScores, int size) {
         // elitism
         if (!bChosenBestYet) {
           baby = copyGenome(curSpc->sSpecies->sLeader);
-          //baby = curSpc->sSpecies->sLeader;
           bChosenBestYet = TRUE;
         } else {
           // if the number of individuals in this species is only one
@@ -151,8 +150,7 @@ void epoch(sPopulation * pop, double * fitnessScores, int size) {
             if (randFloat() < pop->sParams->dCrossoverRate) {
               // spawn2, make sure it's not the same as g1
               sGenome * g2 = randomAmongBest( curSpc->sSpecies,
-                                            pop->sParams->dSurvivalRate );
-
+                                              pop->sParams->dSurvivalRate );
               // number of attempts at finding a different genome
               int numAttempts = pop->sParams->iNumTrysToFindMate;
               while (g1->iId == g2->iId && numAttempts--)
@@ -160,8 +158,10 @@ void epoch(sPopulation * pop, double * fitnessScores, int size) {
                                       pop->sParams->dSurvivalRate);
               if (g1->iId != g2->iId)
                 baby = crossover(g1, g2);
+              else
+                baby = copyGenome(g1); // crossover fail
             } else {
-              baby = copyGenome(g1);
+              baby = copyGenome(g1);   // no crossover
             }
           }
 
@@ -192,7 +192,7 @@ void epoch(sPopulation * pop, double * fitnessScores, int size) {
 
         //add to new pop
         newGenomes[numSpawnedSoFar++] = baby;
-
+        
         if (numSpawnedSoFar == pop->sParams->iNumIndividuals)
           goto newGenerationReady;
 
@@ -216,7 +216,7 @@ void epoch(sPopulation * pop, double * fitnessScores, int size) {
   }
 
 newGenerationReady:
-
+  
   // free the old vector of genomes
   for (gen = 0; gen < pop->iNumGenomes; gen++)
     freeGenome(pop->vGenomes[gen]); // free the genome itself
@@ -228,13 +228,12 @@ newGenerationReady:
   //create the new phenotypes
   for (gen = 0; gen < pop->iNumGenomes; gen++) {
     if (UltraVerbose)
-      //dumpGenome(pop->vGenomes[gen]);
-      printf("genome id : %d\n", pop->vGenomes[gen]->iId);
+      dumpGenome(pop->vGenomes[gen]);
     //calculate max network depth
     int depth = calculateNetDepth(pop->vGenomes[gen]);
     createPhenotype(pop->vGenomes[gen], depth);
-    //if (UltraVerbose)
-      //dumpPhenotype(pop->vGenomes[gen].pPhenotype, pop->vGenomes[gen].iId);
+    if (UltraVerbose)
+      dumpPhenotype(pop->vGenomes[gen]->pPhenotype, pop->vGenomes[gen]->iId);
   }
 
   //increase generation counter
@@ -257,6 +256,7 @@ void resetAndKill(sPopulation * pop, int iNumGensAllowedNoImprovement) {
     // the best genome found so far
     if ( curSpec->sSpecies->iGensNoImprovement > iNumGensAllowedNoImprovement
          && curSpec->sSpecies->dBestFitness < pop->dBestEverFitness ) {
+      if (curSpec->prev == NULL) pop->listSpecies = curSpec->next;
       curSpec = removeOneSpecies(curSpec);
     } else {
        curSpec = curSpec->next;
@@ -264,8 +264,9 @@ void resetAndKill(sPopulation * pop, int iNumGensAllowedNoImprovement) {
   }
   //we can also delete the phenotypes
   int gen;
-  for (gen = 0; gen < pop->iNumGenomes; gen++)
+  for (gen = 0; gen < pop->iNumGenomes; gen++) {
     freePhenotype(pop->vGenomes[gen]);
+  }
 }
 
 /* sorts the population into descending fitness, 

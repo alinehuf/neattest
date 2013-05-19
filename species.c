@@ -115,12 +115,13 @@ listSpecies * addOneSpecies(listSpecies * listSpec, sGenome * firstOrg,
   newSlot->sSpecies = newSpec;
   newSlot->prev = NULL;
   newSlot->next = listSpec;
+  if (listSpec) listSpec->prev = newSlot;
   return newSlot;
 }
 
 listSpecies * removeOneSpecies(listSpecies * curSpec) {
-  curSpec->prev->next = curSpec->next;
-  curSpec->next ->prev= curSpec->prev;
+  if (curSpec->prev) curSpec->prev->next = curSpec->next;
+  if (curSpec->next) curSpec->next->prev = curSpec->prev;
   listSpecies * next = curSpec->next;
   free(curSpec->sSpecies->vMembers);
   free(curSpec->sSpecies->sLeader);
@@ -136,8 +137,9 @@ listSpecies * removeOneSpecies(listSpecies * curSpec) {
 void dumpSpecies(listSpecies * listSpec) {
   puts("-------list of species :");
   while (listSpec != NULL) {
-    printf("species %d - age %d - no improvement since %d generations - "
-           "%d members - best fitness : %f - spawn : %f - leader : genome %d\n",
+    printf("species %d - age %-2d - no improvement since %d generations - "
+           "%-2d members - best fitness : %f - spawn : %6.2f - "
+           "leader : genome %d\n",
            listSpec->sSpecies->iSpeciesId, listSpec->sSpecies->iAge,
            listSpec->sSpecies->iGensNoImprovement,
            listSpec->sSpecies->iNumMembers, listSpec->sSpecies->dBestFitness,

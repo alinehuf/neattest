@@ -16,7 +16,7 @@
 #include "population.h"
 
 /* GLOBALES */
-int UltraVerbose = 1;
+int UltraVerbose = 0;
 //const char * games_dir = "/Users/dex/FAC/M1_MEMOIRE/NeatTest_0.1/NeatTest_0.1/data/";
 //const char * log_dir = "/Users/dex/FAC/M1_MEMOIRE/NeatTest_0.1/NeatTest_0.1/log/";
 const char * games_dir = "data/";
@@ -82,7 +82,7 @@ void testOneGame(char * gamePath, char * paramsPath) {
   }
 
   // iterations : compute fitnesses and generates next epoch
-  for (iter = 0; iter < 1; iter++) { // params->iNumEpoch
+  for (iter = 0; iter < params->iNumEpoch; iter++) { 
     printf("------- epoch %d\n", pop->iGeneration);
     for (indiv = 0; indiv < pop->iNumGenomes; indiv++) {
       totalError = 0;
@@ -103,7 +103,7 @@ void testOneGame(char * gamePath, char * paramsPath) {
     }
 
     for (indiv = 0; indiv < params->iNumIndividuals; indiv++) {
-      printf("%f ", fitnesses[indiv]);
+      printf("gen%03d = %f\t", pop->vGenomes[indiv]->iId, fitnesses[indiv]);
     }
     printf("\n");
 
@@ -116,7 +116,7 @@ void testOneGame(char * gamePath, char * paramsPath) {
   // free game data
   freeSimpleData(simpleData);
   freeData(data);
-  //free(params);
+  free(params);
 }
 
 

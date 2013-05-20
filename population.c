@@ -66,7 +66,7 @@ void freePopulation(sPopulation * pop) {
 /* free all species */
 void freeSpecies(sPopulation * pop) {
   while (pop->listSpecies != NULL) {
-    listSpecies * tmp = pop->listSpecies->next;
+    listSpecies * tmp = pop->listSpecies->cdr;
     free(pop->listSpecies->sSpecies->vMembers);
     freeGenome(pop->listSpecies->sSpecies->sLeader);
     free(pop->listSpecies->sSpecies);
@@ -198,7 +198,7 @@ void epoch(sPopulation * pop, double * fitnessScores, int size) {
 
       } //end while
     } //end if
-    curSpc = curSpc->next;
+    curSpc = curSpc->cdr;
   }
 
   // if there is an underflow due to the rounding error and the amount
@@ -251,22 +251,18 @@ void resetAndKill(sPopulation * pop, int iNumGensAllowedNoImprovement) {
   listSpecies * curSpec = pop->listSpecies;
   while (curSpec != NULL) {
     purgeSpecies(curSpec->sSpecies);
-
     // kill off species if not improving and if not the species which contains
     // the best genome found so far
     if ( curSpec->sSpecies->iGensNoImprovement > iNumGensAllowedNoImprovement
-         && curSpec->sSpecies->dBestFitness < pop->dBestEverFitness ) {
-      if (curSpec->prev == NULL) pop->listSpecies = curSpec->next;
-      curSpec = removeOneSpecies(curSpec);
-    } else {
-       curSpec = curSpec->next;
-    }
+         && curSpec->sSpecies->dBestFitness < pop->dBestEverFitness )
+      curSpec = removeOneSpecies( &pop->listSpecies,
+                                  curSpec->sSpecies->iSpeciesId );
+    else curSpec = curSpec->cdr;
   }
   //we can also delete the phenotypes
   int gen;
-  for (gen = 0; gen < pop->iNumGenomes; gen++) {
+  for (gen = 0; gen < pop->iNumGenomes; gen++)
     freePhenotype(pop->vGenomes[gen]);
-  }
 }
 
 /* sorts the population into descending fitness, 
@@ -332,7 +328,7 @@ void speciateAndCalculateSpawnLevels(sPopulation * pop) {
         bAdded = TRUE;
         break;
       }
-      curSpc = curSpc->next;
+      curSpc = curSpc->cdr;
     }
     // if we have not found a compatible species, let's create a new one
     if (!bAdded)
@@ -346,7 +342,7 @@ void speciateAndCalculateSpawnLevels(sPopulation * pop) {
   curSpc = pop->listSpecies;
   while (curSpc != NULL) {
     adjustFitnesses(curSpc->sSpecies, pop->sParams);
-    curSpc = curSpc->next;
+    curSpc = curSpc->cdr;
   }
 
   // calculate new adjusted total & average fitness for the population
@@ -366,7 +362,7 @@ void speciateAndCalculateSpawnLevels(sPopulation * pop) {
   curSpc = pop->listSpecies;
   while (curSpc != NULL) {
     speciesSpawnAmount(curSpc->sSpecies);
-    curSpc = curSpc->next;
+    curSpc = curSpc->cdr;
   }
 }
 

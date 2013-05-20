@@ -35,9 +35,9 @@ int main(int argc, char * argv[]) {
   srand((unsigned int) time(NULL)); // inits random
   
   //genomeTest(); // first test
-  //populationTest(); // second test
+  populationTest(); // second test
   //testOneGame("/Users/dex/FAC/M1_MEMOIRE/NeatTest_0.1/NeatTest_0.1/data/tictactoe_P1.txt", "params_1game.ini");
-  testOneGame("data/tictactoe_P1.txt", "params_1game.ini");
+  //testOneGame("data/tictactoe_P1.txt", "params_1game.ini");
 
   return 0;
 }
@@ -183,12 +183,12 @@ void genomeTest() {
 }
 
 /*
- * second test : population, speciation, reproduction
+ * second test XOR : population, speciation, reproduction
  */
 void populationTest() {
   sParams * params = loadConf(NULL);
 
-  double data_in[4][3] = {{0, 0}, {0, 1}, {1, 0}, {1, 1}};
+  double data_in[4][2] = {{0, 0}, {0, 1}, {1, 0}, {1, 1}};
   double data_out[4] = {0, 1, 1, 0};
 
   // Create a new population
@@ -210,19 +210,22 @@ void populationTest() {
   double error, totalError;
   
   // iterations : compute fitnesses and generates next epoch
-  for (iter = 0; iter < 2; iter++) {
+  for (iter = 0; iter < params->iNumEpoch; iter++) {
     printf("------- epoch %d\n", pop->iGeneration);
     for (indiv = 0; indiv < pop->iNumGenomes; indiv++) {
+      //printf("indiv %-3d répond = ", pop->vGenomes[indiv]->iId);
       totalError = 0;
       for (entry = 0; entry < 4; entry++) {
         double * outputs = updateANNresponse(pop->vGenomes[indiv]->pPhenotype,
                                              data_in[entry], 3, 1, SNAPSHOT);
+        //printf("%6.2f ", outputs[0]);
         error = data_out[entry] - outputs[0];
         if (error < 0) error = -error;
         totalError += error;
         free(outputs);
       }
       totalError /= 4;
+      //printf("- erreur=%6.2f\n", totalError);
       fitnesses[indiv] = (1 - totalError) * 100;
     }
 
@@ -236,9 +239,40 @@ void populationTest() {
 //                                      pop->iNumGenomes );
 //    freeSpecies(pop);
 
+    // create next epoch
     epoch(pop, fitnesses, pop->iNumGenomes);
-  }
 
+    // show best genome and outputs
+    listSpecies * curSpec = pop->listSpecies;
+    double max = 0;
+    sGenome * maxGen = NULL;
+    while(curSpec != NULL) {
+      if (curSpec->sSpecies->dBestFitness > max) {
+        max = curSpec->sSpecies->dBestFitness;
+        maxGen = curSpec->sSpecies->sLeader;
+      }
+      curSpec = curSpec->cdr;
+    }
+    dumpGenome(maxGen);
+    int depth = calculateNetDepth(maxGen);
+    createPhenotype(maxGen, depth);
+    printf("outputs = ");
+    totalError = 0;
+    for (entry = 0; entry < 4; entry++) {
+      double * outputs = updateANNresponse(maxGen->pPhenotype,
+                                           data_in[entry], 3, 1, SNAPSHOT);
+      error = data_out[entry] - outputs[0];
+      if (error < 0) error = -error;
+      totalError += error;
+      printf("%d %d => %8.6f\t",
+             (int) data_in[entry][0], (int) data_in[entry][1], outputs[0]);
+      free(outputs);
+    }
+    totalError /= 4;
+    printf("- erreur=%6.2f - fitness=%6.2f\n", totalError,
+                                               (1 - totalError) * 100);
+  }
+  
   free(fitnesses);
   freePopulation(pop);
   free(params);

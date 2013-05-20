@@ -125,9 +125,9 @@ sGenome * createInitialGenome(int id, int nbInputs, int nbOutputs) {
   genomeAddNeuron(gen, ng);
 
   // create the output neurons
-  double outSlice = 1 / (double) (nbOutputs - 1);
+  double outSlice = 1 / (double) (nbOutputs + 1);
   for (i = 0; i < nbOutputs; i++) {
-    ng = createNeuronGene(i + nbInputs + 1, OUTPUT, FALSE, i * outSlice, 1);
+    ng = createNeuronGene(i + nbInputs + 1, OUTPUT, FALSE, (i+1) * outSlice, 1);
 		genomeAddNeuron(gen, ng);
   }
 	// create the link genes, connect each input neuron to each output neuron and
@@ -170,11 +170,8 @@ sGenome * createEmptyGenome(int id, int nbInputs, int nbOutputs) {
 sGenome * copyGenome(sGenome * model) {
   int i;
 
-  sGenome * copy = malloc(sizeof(*copy));
+  sGenome * copy = calloc(1, sizeof(*copy));
   copy->iId = model->iId;
-  // initialize fitness
-  copy->dFitness = 0;
-  copy->dAjustedFitness = 0;
   // remember number of inputs and outputs
   copy->iNumInputs = model->iNumInputs;
   copy->iNumOuputs = model->iNumOuputs;
@@ -185,15 +182,13 @@ sGenome * copyGenome(sGenome * model) {
   copy->iNumLinks = model->iNumLinks;
   // allocate memory for vectors of neurons and links
   copy->vNeurons = calloc(copy->iTotalNeurons, sizeof(*(copy->vNeurons)));
-  for (i = 0; i < model->iNumNeurons; i++) {
+  for (i = 0; i < copy->iNumNeurons; i++) {
     copy->vNeurons[i] = copyNeuronGene(model->vNeurons[i]);
   }
   copy->vLinks = calloc(copy->iTotalLinks, sizeof(*(copy->vLinks)));
-  for (i = 0; i < model->iNumLinks; i++) {
+  for (i = 0; i < copy->iNumLinks; i++) {
     copy->vLinks[i] = copyLinkGene(model->vLinks[i]);
   }
-  // init phenotype
-  copy->pPhenotype = NULL;
   return copy;
 }
 

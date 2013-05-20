@@ -26,12 +26,11 @@ typedef struct {
 // doubly linked list of species
 typedef struct listSpecies {
   sSpecies * sSpecies;
-  struct listSpecies * prev;
-  struct listSpecies * next;
+  struct listSpecies * cdr;
 } listSpecies;
 
 // species
-sSpecies * createSpecies(sGenome  * firstOrg,int speciesId,int iNumIndividuals);
+sSpecies * createSpecies(sGenome * firstOrg, int specId, int iNumIndividuals);
 void addMember(sSpecies * spec, sGenome * newMember);
 void purgeSpecies(sSpecies * spec);
 void adjustFitnesses(sSpecies * spec, sParams * param);
@@ -40,7 +39,7 @@ sGenome * randomAmongBest(sSpecies * spec, double dSurvivalRate);
 // doubly linked list of species
 listSpecies * addOneSpecies(listSpecies * lastSpec, sGenome * firstOrg,
                                             int speciesId, int iNumIndividuals);
-listSpecies * removeOneSpecies(listSpecies * curSpec);
+listSpecies * removeOneSpecies(listSpecies ** listSpec, int specId);
 // convenient for debug
 void dumpSpecies(listSpecies * listSpec);
 

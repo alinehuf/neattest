@@ -19,14 +19,14 @@
  * is kept in sLeader and the first element of vMembers is a pointer to that 
  * genome.
  */
-sSpecies * createSpecies(sGenome * firstOrg,int speciesId, int iNumIndividuals){
+sSpecies * createSpecies(sGenome * firstOrg, int specId, int iNumIndividuals) {
   sSpecies * spec = (sSpecies *) malloc(sizeof(*spec));
   spec->sLeader = copyGenome(firstOrg);
   spec->vMembers = (sGenome* *) calloc(iNumIndividuals,sizeof(*spec->vMembers));
   spec->vMembers[0] = firstOrg;
   spec->iNumMembers = 1;
   spec->iTotalMembers = iNumIndividuals;
-  spec->iSpeciesId = speciesId;
+  spec->iSpeciesId = specId;
   spec->dBestFitness = firstOrg->dFitness;
   spec->iGensNoImprovement = 0;
   spec->iAge = 0;
@@ -113,20 +113,29 @@ listSpecies * addOneSpecies(listSpecies * listSpec, sGenome * firstOrg,
   sSpecies * newSpec = createSpecies(firstOrg, speciesId, iNumIndividuals);
   listSpecies * newSlot = (listSpecies *) malloc(sizeof(*newSlot));
   newSlot->sSpecies = newSpec;
-  newSlot->prev = NULL;
-  newSlot->next = listSpec;
-  if (listSpec) listSpec->prev = newSlot;
+  newSlot->cdr = listSpec;
   return newSlot;
 }
 
-listSpecies * removeOneSpecies(listSpecies * curSpec) {
-  if (curSpec->prev) curSpec->prev->next = curSpec->next;
-  if (curSpec->next) curSpec->next->prev = curSpec->prev;
-  listSpecies * next = curSpec->next;
-  free(curSpec->sSpecies->vMembers);
-  free(curSpec->sSpecies->sLeader);
-  free(curSpec->sSpecies);
-  free(curSpec);
+listSpecies * removeOneSpecies(listSpecies ** listSpec, int specId) {
+  listSpecies * curSpec = *listSpec;
+  listSpecies * prev = NULL;
+  listSpecies * next = NULL;
+  while (curSpec != NULL) {
+    if (curSpec->sSpecies->iSpeciesId == specId) {
+      next = curSpec->cdr;
+      if (prev != NULL) prev->cdr = curSpec->cdr;
+      else listSpec = &curSpec->cdr;
+      free(curSpec->sSpecies->vMembers);
+      free(curSpec->sSpecies->sLeader);
+      free(curSpec->sSpecies);
+      free(curSpec);
+      break;
+    } else {
+      prev = curSpec;
+      curSpec = curSpec->cdr;
+    }
+  }
   return next;
 }
 
@@ -137,13 +146,13 @@ listSpecies * removeOneSpecies(listSpecies * curSpec) {
 void dumpSpecies(listSpecies * listSpec) {
   puts("-------list of species :");
   while (listSpec != NULL) {
-    printf("species %d - age %-2d - no improvement since %d generations - "
+    printf("species %-2d - age %-3d - no improvement since %-2d generations - "
            "%-2d members - best fitness : %f - spawn : %6.2f - "
            "leader : genome %d\n",
            listSpec->sSpecies->iSpeciesId, listSpec->sSpecies->iAge,
            listSpec->sSpecies->iGensNoImprovement,
            listSpec->sSpecies->iNumMembers, listSpec->sSpecies->dBestFitness,
            listSpec->sSpecies->dSpawnsRqd, listSpec->sSpecies->sLeader->iId);
-    listSpec = listSpec->next;
+    listSpec = listSpec->cdr;
   }
 }

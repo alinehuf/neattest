@@ -314,14 +314,14 @@ void dumpInputsFactsAndGenome(FILE * out, testBase * data, sGenome * maxGen) {
 void genomeToGraphizDotFile(sGenome * gen, testBase * data, sPopulation * pop,
                             const char * dir, char * gameName) {
   FILE * fp;
-  GVC_t * gvc = gvContext();
   char string_buffer1[512];
   char string_buffer2[512];
+  GVC_t * gvc = gvContext();
   Agnode_t * node1;
   Agnode_t * node2;
   Agedge_t * edge;
-  int i;
-  
+  int i, j;
+
   // new graph
   sprintf(string_buffer1, "Genome_%d", gen->iId);
   Agraph_t * g = agopen(string_buffer1, Agstrictdirected, NULL);
@@ -331,10 +331,12 @@ void genomeToGraphizDotFile(sGenome * gen, testBase * data, sPopulation * pop,
   agattr(g, AGRAPH, "rotate", "90");
   agattr(g, AGRAPH, "splines", "polyline");
   agattr(g, AGRAPH, "ranksep", "3 equally");
-  agattr(g, AGNODE, "style", "");
+  agattr(g, AGNODE, "style", "filled");
   agattr(g, AGNODE, "shape", "");
+
   // subgraph legend
   Agraph_t * legend = agsubg(g, NULL, 1);
+  agattr(legend, AGNODE, "style", "");
   agattr(legend, AGNODE, "shape", "plaintext");
   agattr(legend, AGNODE, "fontsize", "16");
   Agnode_t * inputs = agnode(legend, "inputs", 1);
@@ -347,17 +349,16 @@ void genomeToGraphizDotFile(sGenome * gen, testBase * data, sPopulation * pop,
   for (i = 0; i < pop->iNumDepth; i++) {
     subg[i] = agsubg(g, NULL, 1);
     agsafeset(subg[i], "rank", "same", "");
-    if (pop->vDepths[i] == 0) {
+    if (i == 0) {
       inputs_subgraph = subg[i];
       agnode(inputs_subgraph, "inputs", 1); // inputs
     }
-    else if (pop->vDepths[i] == 1) {
+    else if (i == 1) {
       outputs_subgraph = subg[i];
       agnode(outputs_subgraph, "outputs", 1); // outputs
     }      
   }
   // all neurons
-  agattr(g, AGNODE, "style", "filled");
   for (i = 0; i < gen->iNumNeurons; i++) {
     sprintf(string_buffer1, "%d", gen->vNeurons[i]->iId);
     if (i < data->iNumFacts) {                             // input node
@@ -377,9 +378,9 @@ void genomeToGraphizDotFile(sGenome * gen, testBase * data, sPopulation * pop,
                              gen->vNeurons[i]->dSigmoidCurvature);
       agset(node1, "label", string_buffer2);
     } else {                                               // hidden node
-      for (i = 0; i < pop->iNumDepth; i++) {
-        if (gen->vNeurons[i]->dSplitY == pop->vDepths[i]) {
-          node1 = agnode(subg[i], string_buffer1, 1);
+      for (j = 0; j < pop->iNumDepth; j++) {
+        if (gen->vNeurons[i]->dSplitY == pop->vDepths[j]) {
+          node1 = agnode(subg[j], string_buffer1, 1);
           break;
         }
       }

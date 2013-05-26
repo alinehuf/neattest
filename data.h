@@ -9,6 +9,7 @@
 #ifndef gaGGPfinalState_loaddata_h
 #define gaGGPfinalState_loaddata_h
 
+#define MAX_LINE_SIZE 2048
 #define INIT_DATA_VECT_SIZE 1000
 #define MAX_PLAYERS_NUMBER 10
 

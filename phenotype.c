@@ -9,7 +9,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "phenotype.h"
+#include <string.h>
+#include "global.h"
 
 /*******************************************************************************
  * neuron of the final ANN (phenotype)
@@ -73,9 +74,70 @@ void phenotypeAddLinkIn(sNeuron * neuron, sLink * tmpLink) {
   neuron->vLinksIn[neuron->iNumLinksIn++] = tmpLink;
 }
 
-/* creation and deletion of the phenotype corresponding to a particular 
- * genotype => into genome.c
+/*******************************************************************************
+ * creation / deletion of the phenotype corresponding to a genotype
+ ******************************************************************************/
+
+/* creates a neural network based upon the information in the genome.
+ * returns a pointer to the newly created ANN
  */
+sPhenotype * createPhenotype(sGenome * gen, int depth) {
+  //first make sure there is no existing phenotype for this genome
+  if (gen->pPhenotype != NULL) freePhenotype(gen);
+
+  // allocate the new phenotype
+  gen->pPhenotype = (sPhenotype *) calloc(1, sizeof(*gen->pPhenotype));
+
+  // this will hold all the neurons required for the phenotype
+  gen->pPhenotype->vNeurons =
+  calloc(gen->iNumNeurons, sizeof(*gen->pPhenotype->vNeurons));
+  gen->pPhenotype->iNumNeurons = gen->iNumNeurons;
+  gen->pPhenotype->iDepth = depth;
+
+  // first, create all the required neurons
+  int i;
+  for (i = 0; i < gen->iNumNeurons; i++)
+    gen->pPhenotype->vNeurons[i] = createNeuron(gen->vNeurons[i]->iId,
+                                                gen->vNeurons[i]->eNeuronType,
+                                                gen->vNeurons[i]->dSplitY,
+                                                gen->vNeurons[i]->dSplitX,
+                                                gen->vNeurons[i]->dSigmoidCurvature);
+  // now to create the links.
+  for (i = 0; i < gen->iNumLinks; i++) {
+    // make sure the link gene is enabled before the connection is created
+    if (gen->vLinks[i]->bEnabled) {
+      // get the pointers to the relevant neurons
+      int neuronPos = getNeuronPos(gen, gen->vLinks[i]->iFromNeuron);
+      sNeuron * fromNeuron = gen->pPhenotype->vNeurons[neuronPos];
+
+      neuronPos = getNeuronPos(gen, gen->vLinks[i]->iToNeuron);
+      sNeuron * toNeuron = gen->pPhenotype->vNeurons[neuronPos];
+
+      // create a link between those two neurons and assign the weight stored
+      // in the gene
+      sLink * tmpLink = createLink(gen->vLinks[i]->dWeight, fromNeuron,
+                                   toNeuron, gen->vLinks[i]->bRecurrent);
+      //add new links to neuron
+      phenotypeAddLinkOut(fromNeuron, tmpLink);
+      phenotypeAddLinkIn(toNeuron, tmpLink);
+    }
+  }
+  return gen->pPhenotype;
+}
+
+void freePhenotype(sGenome * gen) {
+  int i, j;
+  for (i = 0; i < gen->pPhenotype->iNumNeurons; i++) {
+    for (j = 0; j < gen->pPhenotype->vNeurons[i]->iNumLinksIn; j++)
+      free(gen->pPhenotype->vNeurons[i]->vLinksIn[j]);
+    free(gen->pPhenotype->vNeurons[i]->vLinksIn);
+    free(gen->pPhenotype->vNeurons[i]->vLinksOut);
+    free(gen->pPhenotype->vNeurons[i]);
+  }
+  free(gen->pPhenotype->vNeurons);
+  free(gen->pPhenotype);
+  gen->pPhenotype = NULL;
+}
 
 /*******************************************************************************
  * update ANN response
@@ -100,12 +162,8 @@ double * updateANNresponse(sPhenotype * phen, double * inputs, int nbInputs,
 
   // iterate through the network FlushCount times
   for (i = 0; i < flushCount; i++) {
-    // clear the output vector
-    // outputs.clear();
-    ouputIdx = 0;
-
-    // this is an index into the current neuron
-    int cNeuron = 0;
+    ouputIdx = 0;    // clear the output vector
+    int cNeuron = 0; // this is an index for the current neuron
 
     // first set the outputs of the 'input' neurons to be equal
     // to the values passed into the function in inputs
@@ -134,14 +192,16 @@ double * updateANNresponse(sPhenotype * phen, double * inputs, int nbInputs,
       }
       // now put the sum through the activation function and assign the
       // value to this neuron's output
-      phen->vNeurons[cNeuron]->dOutput =
+      if (phen->vNeurons[cNeuron]->dActivationResponse == 0)
+        phen->vNeurons[cNeuron]->dOutput = (sum >= 0)? 1 : 0;
+      else
+        phen->vNeurons[cNeuron]->dOutput =
                      sigmoid(sum, phen->vNeurons[cNeuron]->dActivationResponse);
 
       if (phen->vNeurons[cNeuron]->eNeuronType == OUTPUT) {
         //add to our outputs
         outputs[ouputIdx++] = phen->vNeurons[cNeuron]->dOutput;
       }
-
       // next neuron
       cNeuron++;
     }
@@ -154,9 +214,22 @@ double * updateANNresponse(sPhenotype * phen, double * inputs, int nbInputs,
     for (i = 0; i < phen->iNumNeurons; i++)
       phen->vNeurons[i]->dOutput = 0;
   }
-  
   // return the outputs
   return outputs;
+}
+
+/*******************************************************************************
+ * activation function / sigmoid
+ ******************************************************************************/
+
+/* sigmoid function of the neurons.
+ * if activationResponse tends to 0, this is a binary threshold function
+ * netinput > 0 => 1
+ * netinput < 0 => 0
+ * else if activationResponse tends to 1, the sigmoid curve is smoother
+ */
+double sigmoid(double netinput, double activationResponse) {
+	return (1 / (1 + exp(-netinput / activationResponse)));
 }
 
 /*******************************************************************************
@@ -203,7 +276,7 @@ void dumpPhenotype(sPhenotype * phen, int idx) {
              phen->vNeurons[i]->vLinksIn[j]->pNeuronIn->iID,
              phen->vNeurons[i]->vLinksIn[j]->pNeuronOut->iID,
              phen->vNeurons[i]->vLinksIn[j]->dWeight,
-             (phen->vNeurons[i]->vLinksIn[j]->bRecurrent == TRUE)? "yes":"no");
+             (phen->vNeurons[i]->vLinksIn[j]->bRecurrent == E_TRUE)?"yes":"no");
     }
     puts("\tLINKS OUT:");
     for (j = 0; j < phen->vNeurons[i]->iNumLinksOut; j++) {
@@ -211,15 +284,7 @@ void dumpPhenotype(sPhenotype * phen, int idx) {
              phen->vNeurons[i]->vLinksOut[j]->pNeuronIn->iID,
              phen->vNeurons[i]->vLinksOut[j]->pNeuronOut->iID,
              phen->vNeurons[i]->vLinksOut[j]->dWeight,
-             (phen->vNeurons[i]->vLinksOut[j]->bRecurrent == TRUE)? "yes":"no");
+             (phen->vNeurons[i]->vLinksOut[j]->bRecurrent==E_TRUE)? "yes":"no");
     }
   }
-}
-
-/*******************************************************************************
- * activation function / sigmoid
- ******************************************************************************/
-
-double sigmoid(double netinput, double activationResponse) {
-	return ( 1 / ( 1 + exp(- netinput / activationResponse)));
 }

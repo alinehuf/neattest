@@ -11,7 +11,7 @@
 #include <string.h>
 #include "params.h"
 
-#define DEFAULT_CONF_FILE "params.ini"
+#define DEFAULT_CONF_FILE "/Users/dex/FAC/M1_MEMOIRE/NeatTest_0.1/NeatTest_0.1/params/params.ini"
 enum {DOUBLE_TYPE = 0, FLOAT_TYPE, INT_TYPE};
 
 /*******************************************************************************
@@ -81,40 +81,43 @@ sParams * loadConf(char * file) {
              INT_TYPE, fileref);
   loadNumber("iNumEpoch", &params->iNumEpoch,
              INT_TYPE, fileref);
-  
+  loadNumber("iDumpEvery", &params->iDumpEvery,
+             INT_TYPE, fileref);
   fclose(fileref);
 
-  // dump
-  puts("------------ parameters :");
-  printf("dWeightMutationRate :        %f\n", params->dWeightMutationRate);
-  printf("dMaxWeightPerturbation :     %f\n", params->dMaxWeightPerturbation);
-  printf("dProbabilityWeightReplaced : %f\n",params->dProbabilityWeightReplaced);
-  printf("dActivationMutationRate :    %f\n", params->dActivationMutationRate);
-  printf("dMaxActivationPerturbation : %f\n",params->dMaxActivationPerturbation);
-  printf("dChanceAddLink :             %f\n", params->dChanceAddLink);
-  printf("dChanceAddRecurrentLink :    %f\n", params->dChanceAddRecurrentLink);
-  printf("iNumTrysToFindLoop :         %d\n", params->iNumTrysToFindLoop);
-  printf("iNumTrysToAddLink :          %d\n", params->iNumTrysToAddLink);
-  printf("dChanceAddNode :             %f\n", params->dChanceAddNode);
-  printf("iNumTrysToFindOldLink :      %d\n", params->iNumTrysToFindOldLink);
-  printf("dCompatibilityThreshold :    %f\n", params->dCompatibilityThreshold);
-  printf("dExcessGenesCoef :           %f\n", params->dExcessGenesCoef);
-  printf("dDisjointGenesCoef :         %f\n", params->dDisjointGenesCoef);
-  printf("dWeightDiffCoef :            %f\n", params->dWeightDiffCoef);
-  printf("iMaxSpecies :                %d\n", params->iMaxSpecies);
-  printf("iYoungBonusAgeThreshhold     %d\n", params->iYoungBonusAgeThreshhold);
-  printf("dYoungFitnessBonus :         %f\n", params->dYoungFitnessBonus);
-  printf("iOldAgeThreshold :           %d\n", params->iOldAgeThreshold);
-  printf("dOldAgePenalty :             %f\n", params->dOldAgePenalty);
-  printf("dSurvivalRate :              %f\n", params->dSurvivalRate);
-  printf("dCrossoverRate :             %f\n", params->dCrossoverRate);
-  printf("iNumTrysToFindMate :         %d\n", params->iNumTrysToFindMate);
-  printf("iNumGensAllowedNoImprov :    %d\n", params->iNumGensAllowedNoImprov);
-  printf("iNumIndividuals :            %d\n", params->iNumIndividuals);
-  printf("iNumEpoch :                  %d\n", params->iNumEpoch);
-  puts("-------------------------");
-
   return params;
+}
+
+// dump
+void dumpParams(FILE * out, sParams * params) {
+  fprintf(out, "------------ parameters :\n");
+  fprintf(out, "dWeightMutationRate :        %f\n", params->dWeightMutationRate);
+  fprintf(out, "dMaxWeightPerturbation :     %f\n", params->dMaxWeightPerturbation);
+  fprintf(out, "dProbabilityWeightReplaced : %f\n", params->dProbabilityWeightReplaced);
+  fprintf(out, "dActivationMutationRate :    %f\n", params->dActivationMutationRate);
+  fprintf(out, "dMaxActivationPerturbation : %f\n", params->dMaxActivationPerturbation);
+  fprintf(out, "dChanceAddLink :             %f\n", params->dChanceAddLink);
+  fprintf(out, "dChanceAddRecurrentLink :    %f\n", params->dChanceAddRecurrentLink);
+  fprintf(out, "iNumTrysToFindLoop :         %d\n", params->iNumTrysToFindLoop);
+  fprintf(out, "iNumTrysToAddLink :          %d\n", params->iNumTrysToAddLink);
+  fprintf(out, "dChanceAddNode :             %f\n", params->dChanceAddNode);
+  fprintf(out, "iNumTrysToFindOldLink :      %d\n", params->iNumTrysToFindOldLink);
+  fprintf(out, "dCompatibilityThreshold :    %f\n", params->dCompatibilityThreshold);
+  fprintf(out, "dExcessGenesCoef :           %f\n", params->dExcessGenesCoef);
+  fprintf(out, "dDisjointGenesCoef :         %f\n", params->dDisjointGenesCoef);
+  fprintf(out, "dWeightDiffCoef :            %f\n", params->dWeightDiffCoef);
+  fprintf(out, "iMaxSpecies :                %d\n", params->iMaxSpecies);
+  fprintf(out, "iYoungBonusAgeThreshhold     %d\n", params->iYoungBonusAgeThreshhold);
+  fprintf(out, "dYoungFitnessBonus :         %f\n", params->dYoungFitnessBonus);
+  fprintf(out, "iOldAgeThreshold :           %d\n", params->iOldAgeThreshold);
+  fprintf(out, "dOldAgePenalty :             %f\n", params->dOldAgePenalty);
+  fprintf(out, "dSurvivalRate :              %f\n", params->dSurvivalRate);
+  fprintf(out, "dCrossoverRate :             %f\n", params->dCrossoverRate);
+  fprintf(out, "iNumTrysToFindMate :         %d\n", params->iNumTrysToFindMate);
+  fprintf(out, "iNumGensAllowedNoImprov :    %d\n", params->iNumGensAllowedNoImprov);
+  fprintf(out, "iNumIndividuals :            %d\n", params->iNumIndividuals);
+  fprintf(out, "iNumEpoch :                  %d\n", params->iNumEpoch);
+  fprintf(out, "iDumpEvery :                 %d\n", params->iDumpEvery);
 }
 
 /* convenient for error messages

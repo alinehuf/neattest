@@ -32,12 +32,12 @@ testBase * loadData(const char * filename) {
                  malloc(INIT_DATA_VECT_SIZE * sizeof(*(data->vAllFinalStates)));
   int i;
   int idxFact = -1;
-  char lineBuffer[BUFSIZ];            // a line of the data file
+  char lineBuffer[MAX_LINE_SIZE];            // a line of the data file
   int charIdx;                        // id of the current char in the line
-  char scoreBuffer[BUFSIZ];           // buffer for the string of scores
-  char buffer[BUFSIZ];                // general buffer (for differents facts)
+  char scoreBuffer[MAX_LINE_SIZE];           // buffer for the string of scores
+  char buffer[MAX_LINE_SIZE];                // general buffer (for differents facts)
 
-  while(fgets(lineBuffer, BUFSIZ, fileref) != NULL) {
+  while(fgets(lineBuffer, MAX_LINE_SIZE, fileref) != NULL) {
     // new final state
     finalState * fstate = malloc(sizeof(*fstate));
 
@@ -119,7 +119,7 @@ int * readScore(char * scoreBuffer, int * iNumPlayers) {
   int intBuffer[MAX_PLAYERS_NUMBER];
   int numScores = 0;
   char * number;
-
+  
   while((number = strsep(&scoreBuffer, " \t")) != NULL) {
     if ((i = sscanf(number, "%d", &intBuffer[numScores++])) < 1) {
       numScores--;

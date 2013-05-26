@@ -8,7 +8,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "innovation.h"
+#include "global.h"
 
 // checks to see if this innovation has already occurred. If it has it
 // returns the innovation ID. If not it returns a negative value.
@@ -79,45 +79,45 @@ void freeInnovTable(sInnovTable * innovTable) {
  * convenient for debug - visualization
  ******************************************************************************/
 
-void dumpInnovTable(sInnovTable * innovTable) {
-  printf("innovTable (%d innovations, next neuron ID = %d) :\n",
+void dumpInnovTable(FILE * out, sInnovTable * innovTable) {
+  fprintf(out, "innovTable (%d innovations, next neuron ID = %d) :\n",
          innovTable->iNumInnovs, innovTable->iNextNeuronId);
   int i;
   for (i = 0; i < innovTable->iNumInnovs; i++) {
-    printf("innov %-2d ", innovTable->vInnovs[i]->iInnovId);
+    fprintf(out, "innov %-2d ", innovTable->vInnovs[i]->iInnovId);
     switch(innovTable->vInnovs[i]->eInnovType) {
       case NEW_NEURON:
-        printf("NEW_NEURON ");
+        fprintf(out, "NEW_NEURON ");
         break;
       case NEW_LINK:
-        printf("NEW_LINK   ");
+        fprintf(out, "NEW_LINK   ");
         break;
       default:
-        printf("UNKNOWN_TYPE ");
+        fprintf(out, "UNKNOWN_TYPE ");
         break;
     }
-    printf("in=%-2d out=%-2d neuronID=%-2d neuronType=",
+    fprintf(out, "in=%-2d out=%-2d neuronID=%-2d neuronType=",
            innovTable->vInnovs[i]->iNeuronIn,
            innovTable->vInnovs[i]->iNeuronOut,
            innovTable->vInnovs[i]->iNeuronId);
     switch(innovTable->vInnovs[i]->eNeuronType) {
       case INPUT:
-        printf("INPUT\n");
+        fprintf(out, "INPUT\n");
         break;
       case HIDDEN:
-        printf("HIDDEN\n");
+        fprintf(out, "HIDDEN\n");
         break;
       case OUTPUT:
-        printf("OUTPUT\n");
+        fprintf(out, "OUTPUT\n");
         break;
       case BIAS:
-        printf("BIAS\n");
+        fprintf(out, "BIAS\n");
         break;
       case NONE:
-        printf("NONE\n");
+        fprintf(out, "NONE\n");
         break;
       default:
-        printf("UNKNOWN_TYPE\n");
+        fprintf(out, "UNKNOWN_TYPE\n");
         break;
     }
   }

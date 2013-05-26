@@ -2,7 +2,6 @@
 #! /bin/sh
 
 DEBUG=yes
-SYSTEM=linux
 
 CC = gcc
 ifeq ($(DEBUG),yes)
@@ -11,19 +10,12 @@ else
 	CFLAGS= -O3
 endif
 
-ifeq ($(SYSTEM),win)
-	#LIBS = -lGL -lGLU -lglut -lm -ljpeg       # win
-	CFLAGS += -DWIN
-else
-	ifeq ($(SYSTEM),linux)
-		#LIBS = -lGL -lGLU -lglut -lm -ljpeg       # linux
-		LIBS = -lm
-		CFLAGS += -DLINUX
-	else
-		#LIBS = -framework Glut -framework OpenGL  # mac
-    CFLAGS += -DMAC
-	endif
-endif
+#macos
+LDFLAGS = -I/usr/local/include/graphviz/ 
+#linux
+LDFLAGS += -I/usr/include/graphviz/
+LDFLAGS += -lgvc -lcgraph -lcdt -lm
+
 SRC = $(wildcard *.c)
 OBJ= $(SRC:.cpp=.o)
 EXEC = neattest
@@ -36,7 +28,7 @@ else
 endif
 
 $(EXEC): $(OBJ)
-	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
+	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 %.o: %.c %.h
 	$(CC) $(CFLAGS) -c $< -o $@ 

@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include "genome.h"
+#include "global.h"
 
 /*******************************************************************************
  * neurons, links and genome creation
@@ -102,6 +102,7 @@ sGenome * createInitialGenome(int id, int nbInputs, int nbOutputs) {
   // remember number of inputs and outputs
   gen->iNumInputs = nbInputs;
   gen->iNumOuputs = nbOutputs;
+  gen->iNumRecur = 0;
 
   // init total possible and current number of neurons and links
   gen->iTotalNeurons = gen->iTotalLinks = INIT_VECT_SIZE;
@@ -117,17 +118,17 @@ sGenome * createInitialGenome(int id, int nbInputs, int nbOutputs) {
   // create the input neurons
   double inSlice = 1 / (double) nbInputs;
 	for (i = 0; i < nbInputs; i++) {
-    ng = createNeuronGene(i, INPUT, FALSE, i * inSlice, 0);
+    ng = createNeuronGene(i, INPUT, E_FALSE, i * inSlice, 0);
     genomeAddNeuron(gen, ng);
   }
   // create the bias
-  ng = createNeuronGene(nbInputs, BIAS, FALSE, 1, 0);
+  ng = createNeuronGene(nbInputs, BIAS, E_FALSE, 1, 0);
   genomeAddNeuron(gen, ng);
 
   // create the output neurons
   double outSlice = 1 / (double) (nbOutputs + 1);
   for (i = 0; i < nbOutputs; i++) {
-    ng = createNeuronGene(i + nbInputs + 1, OUTPUT, FALSE, (i+1) * outSlice, 1);
+    ng = createNeuronGene(i + nbInputs + 1, OUTPUT, E_FALSE, (i+1) * outSlice, 1);
 		genomeAddNeuron(gen, ng);
   }
 	// create the link genes, connect each input neuron to each output neuron and
@@ -137,7 +138,7 @@ sGenome * createInitialGenome(int id, int nbInputs, int nbOutputs) {
       lg = createLinkGene(nbInputs + nbOutputs + 1 + gen->iNumLinks,
                           gen->vNeurons[i]->iId,
                           gen->vNeurons[nbInputs + j + 1]->iId,
-                          randClamped(), TRUE, FALSE);
+                          randClamped(), E_TRUE, E_FALSE);
 			genomeAddLink(gen, lg);
     }
   }
@@ -155,6 +156,7 @@ sGenome * createEmptyGenome(int id, int nbInputs, int nbOutputs) {
   // remember number of inputs and outputs
   gen->iNumInputs = nbInputs;
   gen->iNumOuputs = nbOutputs;
+  gen->iNumRecur = 0;
   // init total and current number of neurons and links
   gen->iTotalNeurons = gen->iTotalLinks = INIT_VECT_SIZE;
   gen->iNumNeurons = gen->iNumLinks = 0;
@@ -172,6 +174,7 @@ sGenome * copyGenome(sGenome * model) {
 
   sGenome * copy = calloc(1, sizeof(*copy));
   copy->iId = model->iId;
+  copy->dFitness = model->dFitness;
   // remember number of inputs and outputs
   copy->iNumInputs = model->iNumInputs;
   copy->iNumOuputs = model->iNumOuputs;
@@ -209,43 +212,43 @@ void freeGenome(sGenome * gen) {
  ******************************************************************************/
 
 /* dump genome */
-void dumpGenome(sGenome * gen) {
-  printf("genome %d (%d inputs, %d outputs, %d nodes, %d links) :\n",
-         gen->iId, gen->iNumInputs, gen->iNumOuputs,
-         gen->iNumNeurons, gen->iNumLinks);
+void dumpGenome(FILE * out, sGenome * gen) {
+  fprintf(out, "genome %d (%d inputs, %d outputs, %d nodes, %d links, "
+          "fitness=%f) :\n", gen->iId, gen->iNumInputs, gen->iNumOuputs,
+          gen->iNumNeurons, gen->iNumLinks, gen->dFitness);
   int i;
   for (i = 0; i < gen->iNumNeurons; i++) {
-    printf("Neurons %-2d - id=%-2d : ", i,
-           gen->vNeurons[i]->iId);
+    fprintf(out, "Neurons %-2d - id=%-2d : ", i,
+            gen->vNeurons[i]->iId);
     switch(gen->vNeurons[i]->eNeuronType) {
       case BIAS:
-        printf("type=bias   ");
+        fprintf(out, "type=bias   ");
         break;
       case INPUT:
-        printf("type=input  ");
+        fprintf(out, "type=input  ");
         break;
       case HIDDEN:
-        printf("type=hidden ");
+        fprintf(out, "type=hidden ");
         break;
       case OUTPUT:
-        printf("type=output ");
+        fprintf(out, "type=output ");
         break;
       case NONE:
-        printf("type=none   ");
+        fprintf(out, "type=none   ");
         break;
       default:
-        printf("TYPE ERROR !");
+        fprintf(out, "TYPE ERROR !");
     }
-    printf("recur=%d activation=%f splitX=%f splitY=%f\n",
-           gen->vNeurons[i]->bRecurrent, gen->vNeurons[i]->dSigmoidCurvature,
-           gen->vNeurons[i]->dSplitX, gen->vNeurons[i]->dSplitY);
+    fprintf(out, "recur=%d activation=%f splitX=%f splitY=%f\n",
+            gen->vNeurons[i]->bRecurrent, gen->vNeurons[i]->dSigmoidCurvature,
+            gen->vNeurons[i]->dSplitX, gen->vNeurons[i]->dSplitY);
   }
   for (i = 0; i < gen->iNumLinks; i++) {
-    printf("link %-2d - inov=%d : from %-2d to %-2d enabled=%i recur=%i "
-           "weight=%+f\n",
-           i, gen->vLinks[i]->iInnovId, gen->vLinks[i]->iFromNeuron,
-           gen->vLinks[i]->iToNeuron, gen->vLinks[i]->bEnabled,
-           gen->vLinks[i]->bRecurrent, gen->vLinks[i]->dWeight);
+    fprintf(out, "link %-2d - inov=%d : from %-2d to %-2d enabled=%i recur=%i "
+            "weight=%+f\n", i, 
+            gen->vLinks[i]->iInnovId, gen->vLinks[i]->iFromNeuron,
+            gen->vLinks[i]->iToNeuron, gen->vLinks[i]->bEnabled,
+            gen->vLinks[i]->bRecurrent, gen->vLinks[i]->dWeight);
   }
 }
 
@@ -253,33 +256,38 @@ void dumpGenome(sGenome * gen) {
  * mutations : weight and sigmoidCurvature mutation
  ******************************************************************************/
 
-void mutateWeigth(sGenome * gen, double weightMutationRate,
-                  double probabilityWeightReplaced,
-                  double maxWeightPerturbation) {
+void mutateWeigth(sGenome * gen, sParams * params) {
   int i;
   for (i = 0; i < gen->iNumLinks; i++) {
     // do we mutate this gene?
-		if (randFloat() < weightMutationRate) {
+		if (randFloat() < params->dWeightMutationRate) {
       // do we change the weight to a completely new weight ?
-			if (randFloat() < probabilityWeightReplaced) {
+			if (randFloat() < params->dProbabilityWeightReplaced) {
         // change the weight using the random distribtion defined by 'type'
 				gen->vLinks[i]->dWeight = randClamped();
       } else {
 				// perturb the weight
-				gen->vLinks[i]->dWeight += randClamped() * maxWeightPerturbation;
+				gen->vLinks[i]->dWeight+=randClamped() * params->dMaxWeightPerturbation;
+        if (gen->vLinks[i]->dWeight > 1) gen->vLinks[i]->dWeight = 1;
+        if (gen->vLinks[i]->dWeight < -1) gen->vLinks[i]->dWeight = -1;
       }
     }
   }
 }
 
-void mutateActivationResponse(sGenome * gen, double activationMutationRate,
-                              double maxActivPerturb) {
+void mutateActivationResponse(sGenome * gen, sParams * params) {
   int i;
   for (i = 0; i < gen->iNumNeurons; i++) {
     // do we mutate this neuron gene ?
-		if (randFloat() < activationMutationRate)
+		if (randFloat() < params->dActivationMutationRate) {
       // perturb the sigmoid curvature
-      gen->vNeurons[i]->dSigmoidCurvature += randClamped() * maxActivPerturb;
+      gen->vNeurons[i]->dSigmoidCurvature += randClamped() *
+                                             params->dMaxActivationPerturbation;
+      if (gen->vNeurons[i]->dSigmoidCurvature > 1)
+        gen->vNeurons[i]->dSigmoidCurvature = 1;
+      if (gen->vNeurons[i]->dSigmoidCurvature < 0)
+        gen->vNeurons[i]->dSigmoidCurvature = 0;
+    }
   }
 }
 
@@ -287,25 +295,24 @@ void mutateActivationResponse(sGenome * gen, double activationMutationRate,
  * mutations : add node or add link
  ******************************************************************************/
 
-void addLink(sGenome * gen, double chanceAddLink, double chanceAddRecurrentLink,
-             sInnovTable * innovTable, int numTrysToFindLoop,
-             int numTrysToAddLink) {
+void addLink(sGenome * gen, sPopulation * pop) {
   // do we really add a link ?
-  if (randFloat() > chanceAddLink) return;
+  if (randFloat() > pop->sParams->dChanceAddLink) return;
   
   // define holders for the two neurons to be linked. If we have find two
   // valid neurons to link these values will become >= 0.
   int neuron_id1 = -1;
   int neuron_id2 = -1;
   // flag set if a recurrent link is selected (looped or normal)
-  bool bRecurrent = FALSE;
+  bool bRecurrent = E_FALSE;
 
   // first test to see if an attempt should be made to create a
   // link that loops back into the same neuron
-  if (randFloat() < chanceAddRecurrentLink) {
+  if (randFloat() < pop->sParams->dChanceAddRecurrentLink) {
     // YES: try numTrysToFindLoop times to find a neuron that is not an
     // input or bias neuron and that does not already have a loopback
     // connection
+    int numTrysToFindLoop = pop->sParams->iNumTrysToFindLoop;
     while(numTrysToFindLoop--) {
       // grab a random neuron that is not an input or bias neuron
       int neuronPos = randInt(gen->iNumInputs + 1, gen->iNumNeurons - 1);
@@ -317,24 +324,30 @@ void addLink(sGenome * gen, double chanceAddLink, double chanceAddRecurrentLink,
                  "an input or bias neuron!");
         }
         neuron_id1 = neuron_id2 = gen->vNeurons[neuronPos]->iId;
-        gen->vNeurons[neuronPos]->bRecurrent = TRUE;
-        bRecurrent = TRUE;
+        gen->vNeurons[neuronPos]->bRecurrent = E_TRUE;
+        gen->iNumRecur++;
+        bRecurrent = E_TRUE;
         numTrysToFindLoop = 0;
       }
     }
   } else {
     // No: try to find two unlinked neurons. Make numTrysToAddLink attempts
-    while(numTrysToAddLink--) {
+    int numTryToAddLink = pop->sParams->iNumTrysToAddLink;
+    while(numTryToAddLink--) {
       // choose two neurons, the second must not be an input or a bias
       neuron_id1 = gen->vNeurons[randInt(0, gen->iNumNeurons - 1)]->iId;
       neuron_id2 =
           gen->vNeurons[randInt(gen->iNumInputs + 1, gen->iNumNeurons -1)]->iId;
 
-      // make sure these two are not already linked and that they are
-      // not the same neuron
+      // make sure these two are not already linked 
+      // and that they are not the same neuron
+      // and that it have the probability to be a recurrent link if it is
       if ( !( duplicateLink(gen, neuron_id1, neuron_id2) ||
-              neuron_id1 == neuron_id2 ) ) {
-        numTrysToAddLink = 0;
+              neuron_id1 == neuron_id2 ||
+              ( randFloat() >= pop->sParams->dChanceAddRecurrentLink &&
+                gen->vNeurons[getNeuronPos(gen, neuron_id1)]->dSplitY >
+                gen->vNeurons[getNeuronPos(gen, neuron_id2)]->dSplitY ) ) ) {
+        numTryToAddLink = 0;
       }  else {
         neuron_id1 = neuron_id2 = -1;
       }
@@ -344,38 +357,38 @@ void addLink(sGenome * gen, double chanceAddLink, double chanceAddRecurrentLink,
   if ( (neuron_id1 < 0) || (neuron_id2 < 0) ) return;
 
   // check to see if we have already created this innovation
-  int id = checkInnovation(innovTable, neuron_id1, neuron_id2, NEW_LINK);
+  int id = checkInnovation(pop->sInnovTable, neuron_id1, neuron_id2, NEW_LINK);
   // is this link recurrent?
   if ( gen->vNeurons[getNeuronPos(gen, neuron_id1)]->dSplitY >
        gen->vNeurons[getNeuronPos(gen, neuron_id2)]->dSplitY ) {
-    bRecurrent = TRUE;
+    bRecurrent = E_TRUE;
+    gen->iNumRecur++;
   }
-  if (id < 0) { //we need to create a new innovation
-    createNewInnov(innovTable, neuron_id1, neuron_id2, NEW_LINK, NONE);
+  if (id < 0) { // we need to create a new innovation
+    createNewInnov(pop->sInnovTable, neuron_id1, neuron_id2, NEW_LINK, NONE);
     // then create the new gene
-    id = innovTable->iNumInnovs - 1;
+    id = pop->sInnovTable->iNumInnovs - 1;
     sLinkGene * lg = createLinkGene(id, neuron_id1, neuron_id2, randClamped(),
-                                  TRUE, bRecurrent);
+                                  E_TRUE, bRecurrent);
     genomeAddLink(gen, lg);
   } else {
     // the innovation has already been created so all we need to
     // do is create the new gene using the existing innovation ID
     sLinkGene * lg = createLinkGene(id, neuron_id1, neuron_id2, randClamped(),
-                                  TRUE, bRecurrent);
+                                  E_TRUE, bRecurrent);
     genomeAddLink(gen, lg);
   }
 }
 
 // this function adds a neuron to the genotype by examining the network,
 // splitting one of the links and inserting the new neuron.
-void addNeuron(sGenome * gen, double dChanceAddNode, sInnovTable * innovTable,
-               int numTrysToFindOldLink) {
+void addNeuron(sGenome * gen, sPopulation * pop) {
   //just return dependent on mutation rate
-  if (randFloat() > dChanceAddNode) return;
+  if (randFloat() > pop->sParams->dChanceAddNode) return;
 
   //if a valid link is found into which to insert the new neuron
-  //this value is set to true.
-  bool bDone = FALSE;
+  //this value is set to E_TRUE.
+  bool bDone = E_FALSE;
 
   //this will hold the index into gen->vLinks of the chosen link gene
   int chosenLink = 0;
@@ -385,6 +398,7 @@ void addNeuron(sGenome * gen, double dChanceAddNode, sInnovTable * innovTable,
   //not occur. Here, if the genome contains less than 5 hidden neurons it
   //is considered to be too small to select a link at random
   if (gen->iNumNeurons < gen->iNumInputs + gen->iNumOuputs + 5) {
+    int numTrysToFindOldLink = pop->sParams->iNumTrysToFindOldLink;
     while(numTrysToFindOldLink--) {
       //choose a link with a bias towards the older links in the genome
       chosenLink = randInt(0, gen->iNumLinks - 1 - (int) sqrt(gen->iNumLinks));
@@ -394,7 +408,7 @@ void addNeuron(sGenome * gen, double dChanceAddNode, sInnovTable * innovTable,
       if ( gen->vLinks[chosenLink]->bEnabled &&
            !gen->vLinks[chosenLink]->bRecurrent &&
            gen->vNeurons[getNeuronPos(gen, fromNeuron)]->eNeuronType != BIAS) {
-        bDone = TRUE;
+        bDone = E_TRUE;
         numTrysToFindOldLink = 0;
       }
     }
@@ -411,12 +425,12 @@ void addNeuron(sGenome * gen, double dChanceAddNode, sInnovTable * innovTable,
       if (gen->vLinks[chosenLink]->bEnabled &&
           !gen->vLinks[chosenLink]->bRecurrent &&
           gen->vNeurons[getNeuronPos(gen, fromNeuron)]->eNeuronType != BIAS) {
-        bDone = TRUE;
+        bDone = E_TRUE;
       }
     }
   }
   // disable this gene
-  gen->vLinks[chosenLink]->bEnabled = FALSE;
+  gen->vLinks[chosenLink]->bEnabled = E_FALSE;
   // grab the weight from the gene (we want to use this for the weight of
   // one of the new links so that the split does not disturb anything the
   // NN may have already learned...
@@ -432,56 +446,57 @@ void addNeuron(sGenome * gen, double dChanceAddNode, sInnovTable * innovTable,
                          gen->vNeurons[getNeuronPos(gen, to)]->dSplitY ) / 2;
   // Now to see if this innovation has been created previously by
   // another member of the population
-  int id = checkInnovation(innovTable, from, to, NEW_NEURON);
+  int id = checkInnovation(pop->sInnovTable, from, to, NEW_NEURON);
   /* it is possible for NEAT to repeatedly do the following:
    1. Find a link. Lets say we choose link 1 to 5
    2. Disable the link,
    3. Add a new neuron and two new links
    4. The link disabled in Step 2 maybe re-enabled when this genome
-   is recombined with a genome that has that link enabled.
-   5  etc etc
+      is recombined with a genome that has that link enabled.
    Therefore, this function must check to see if a neuron ID is already
    being used. If it is then the function creates a new innovation
    for the neuron. */
   if (id >= 0) {
-    int neuron_id = innovTable->vInnovs[id]->iNeuronId;
+    int neuron_id = pop->sInnovTable->vInnovs[id]->iNeuronId;
     if (alreadyHaveThisNeuronId(gen, neuron_id))
       id = -1;
   }
   if (id < 0) {
     // add the innovation for the new neuron
-    int neuron_id = createNewInnov(innovTable, from, to, NEW_NEURON, HIDDEN);
+    int neuron_id = createNewInnov(pop->sInnovTable, from, to,
+                                   NEW_NEURON, HIDDEN);
     // create the new neuron gene and add it.
-    sNeuronGene * ng = createNeuronGene( neuron_id, HIDDEN, FALSE, new_split_x,
-                                       new_split_y );
+    sNeuronGene * ng = createNeuronGene( neuron_id, HIDDEN, E_FALSE,
+                                         new_split_x, new_split_y );
 		genomeAddNeuron(gen, ng);
+    addDepth(pop, new_split_y);
     // Two new link innovations are required, one for each of the
     // new links created when this gene is split.
     //-----------------------------------first link
     //get the next innovation ID
-    int idLink1 = innovTable->iNumInnovs;
+    int idLink1 = pop->sInnovTable->iNumInnovs;
     //create the new innovation
-    createNewInnov(innovTable, from, neuron_id, NEW_LINK, NONE);
+    createNewInnov(pop->sInnovTable, from, neuron_id, NEW_LINK, NONE);
     //create the new link gene
-    sLinkGene * link1 = createLinkGene( idLink1, from, neuron_id, 1.0, TRUE,
-                                        FALSE );
+    sLinkGene * link1 = createLinkGene( idLink1, from, neuron_id, 1.0, E_TRUE,
+                                        E_FALSE );
     genomeAddLink(gen, link1);
     //-----------------------------------second link
     //get the next innovation ID
-    int idLink2 = innovTable->iNumInnovs;
+    int idLink2 = pop->sInnovTable->iNumInnovs;
     //create the new innovation
-    createNewInnov(innovTable, neuron_id, to, NEW_LINK, NONE);
+    createNewInnov(pop->sInnovTable, neuron_id, to, NEW_LINK, NONE);
     //create the new link gene
     sLinkGene * link2 = createLinkGene(idLink2, neuron_id, to, originalWeight,
-                                     TRUE, FALSE);
+                                     E_TRUE, E_FALSE);
     genomeAddLink(gen, link2);
   } else {
     // this innovation has already been created so grab the relevant neuron
     // and link from the innovation table
-    int neuron_id = innovTable->vInnovs[id]->iNeuronId;
+    int neuron_id = pop->sInnovTable->vInnovs[id]->iNeuronId;
     //get the innovation IDs for the two new link genes.
-    int idLink1 = checkInnovation(innovTable, from, neuron_id, NEW_LINK);
-    int idLink2 = checkInnovation(innovTable, neuron_id, to, NEW_LINK);
+    int idLink1 = checkInnovation(pop->sInnovTable, from, neuron_id, NEW_LINK);
+    int idLink2 = checkInnovation(pop->sInnovTable, neuron_id, to, NEW_LINK);
     // this should never happen because the innovations *should* have already
     // occurred
     if (idLink1 < 0 || idLink2 < 0) {
@@ -490,18 +505,155 @@ void addNeuron(sGenome * gen, double dChanceAddNode, sInnovTable * innovTable,
       exit(EXIT_FAILURE);
     }
     //now we need to create 2 new genes to represent the new links
-    sLinkGene * link1 = createLinkGene( idLink1, from, neuron_id, 1.0, TRUE,
-                                        FALSE );
+    sLinkGene * link1 = createLinkGene( idLink1, from, neuron_id, 1.0, E_TRUE,
+                                        E_FALSE );
     sLinkGene * link2 = createLinkGene( idLink2, neuron_id, to, originalWeight,
-                                        TRUE, FALSE );
+                                        E_TRUE, E_FALSE );
     genomeAddLink(gen, link1);
     genomeAddLink(gen, link2);
     //create the new neuron
-    sNeuronGene * ng = createNeuronGene( neuron_id, HIDDEN, FALSE, new_split_x,
-                                         new_split_y );
+    sNeuronGene * ng = createNeuronGene( neuron_id, HIDDEN, E_FALSE,
+                                         new_split_x, new_split_y );
     //and add it
     genomeAddNeuron(gen, ng);
   }
+}
+
+/*******************************************************************************
+ * crossover
+ ******************************************************************************/
+
+sGenome * crossover(sGenome * mum, sGenome * dad) {
+  typedef enum {MUM, DAD, NONE} parent_type;
+  // first, calculate the genome we will using the disjoint/excess genes from.
+  // This is the fittest genome.
+  parent_type best;
+
+  // if they are of equal fitness use the shorter (because we want to keep
+  // the networks as small as possible)
+  if (mum->dFitness == dad->dFitness) {
+    // if they are of equal fitness and length just choose one at random
+    if (mum->iNumLinks == dad->iNumLinks)
+      best = (parent_type) randInt(0, 1);
+    else if (mum->iNumLinks < dad->iNumLinks)
+      best = MUM;
+    else
+      best = DAD;
+  } else if (mum->dFitness > dad->dFitness) {
+    best = MUM;
+  } else {
+    best = DAD;
+  }
+
+  // create en empty genome for the baby (id will be adjusted later)
+  sGenome * baby = createEmptyGenome(-1, mum->iNumInputs, mum->iNumOuputs);
+  // this will hold a copy of the gene we wish to add at each step
+  sLinkGene * selectedGene = NULL; // to control that the choice of the gene
+  parent_type selectedFrom = NONE; // has been done
+
+  int curMum = 0;
+  int curDad = 0;
+  // step through each parents genes until we reach the end of both
+  while (curMum < mum->iNumLinks || curDad < dad->iNumLinks) {
+
+    // the end of mum's genes have been reached
+    if (curMum >= mum->iNumLinks && curDad < dad->iNumLinks) {
+      // if dad is fittest
+      if (best == DAD) { //add dads genes
+        selectedGene = dad->vLinks[curDad];
+        selectedFrom = DAD;
+      }
+      // move onto dad's next gene
+      curDad++;
+    }
+    // the end of dads's genes have been reached
+    else if ( curDad >= dad->iNumLinks && curMum < mum->iNumLinks) {
+      // if mum is fittest
+      if (best == MUM) { //add mums genes
+        selectedGene = mum->vLinks[curMum];
+        selectedFrom = MUM;
+      }
+      // move onto mum's next gene
+      curMum++;
+    }
+    // if mums innovation number is less than dads
+    else if (mum->vLinks[curMum]->iInnovId < dad->vLinks[curDad]->iInnovId) {
+      // if mum is fittest add gene
+      if (best == MUM) {
+        selectedGene = mum->vLinks[curMum];
+        selectedFrom = MUM;
+      }
+      // move onto mum's next gene
+      curMum++;
+    }
+    // if dads innovation number is less than mums
+    else if (dad->vLinks[curDad]->iInnovId < mum->vLinks[curMum]->iInnovId) {
+      // if dad is fittest add gene
+      if (best == DAD) {
+        selectedGene = dad->vLinks[curDad];
+        selectedFrom = DAD;
+      }
+      // move onto dad's next gene
+      curDad++;
+    }
+    // if innovation numbers are the same
+    else if (mum->vLinks[curMum]->iInnovId == dad->vLinks[curDad]->iInnovId)
+    {
+      // grab a gene from either parent
+      if (randFloat() < 0.5f) {
+        selectedGene = mum->vLinks[curMum];
+        selectedFrom = MUM;
+      } else {
+        selectedGene = dad->vLinks[curDad];
+        selectedFrom = DAD;
+      }
+      // move onto next gene of each parent
+      curMum++;
+      curDad++;
+    }
+
+    // this should never happen because the gene *should* have already been
+    // selected
+    if (selectedFrom == NONE || selectedGene == NULL) {
+      fprintf(stderr, "crossover() : error selectedGene and selectedFrom " \
+              "should have a value\n");
+      exit(EXIT_FAILURE);
+    }
+
+    // add the selected gene if not already added
+    if ( baby->iNumLinks == 0 ||
+        baby->vLinks[baby->iNumLinks-1]->iInnovId != selectedGene->iInnovId ) {
+      genomeAddLink(baby, copyLinkGene(selectedGene));
+    }
+
+    // Check if we already have the nodes referred to in SelectedGene.
+    // If not, they need to be added.
+    int idx;
+    if (!alreadyHaveThisNeuronId(baby, selectedGene->iFromNeuron)) {
+      if (selectedFrom == MUM) {
+        idx = getNeuronPos(mum, selectedGene->iFromNeuron);
+        genomeAddNeuron(baby, copyNeuronGene(mum->vNeurons[idx]));
+      } else {
+        idx = getNeuronPos(dad, selectedGene->iFromNeuron);
+        genomeAddNeuron(baby, copyNeuronGene(dad->vNeurons[idx]));
+      }
+    }
+    if (!alreadyHaveThisNeuronId(baby, selectedGene->iToNeuron)) {
+      if (selectedFrom == MUM) {
+        idx = getNeuronPos(mum, selectedGene->iToNeuron);
+        genomeAddNeuron(baby, copyNeuronGene(mum->vNeurons[idx]));
+      } else {
+        idx = getNeuronPos(dad, selectedGene->iToNeuron);
+        genomeAddNeuron(baby, copyNeuronGene(dad->vNeurons[idx]));
+      }
+    }
+  } // end while
+
+  // now sort the neurons into order
+  qsort(baby->vNeurons, baby->iNumNeurons, sizeof(sNeuronGene *),
+        (int (*) (const void *, const void *)) cmpNeuronsByIds);
+
+  return baby;
 }
 
 /*******************************************************************************
@@ -577,7 +729,8 @@ double getCompatibilityScore(sGenome * gen1, sGenome * gen2, sParams * p) {
  * tools to manipulate the genome
  ******************************************************************************/
 
-//	given a neuron ID just finds its position in gen.vNeurons
+/* given a neuron ID just finds its position in gen->vNeurons
+ */
 int getNeuronPos(sGenome * gen, const int id) {
   int i;
   for (i = 0; i < gen->iNumNeurons; i++)
@@ -587,92 +740,27 @@ int getNeuronPos(sGenome * gen, const int id) {
   return -1;
 }
 
-// returns true if the link is already part of the genome
+/* returns E_TRUE if the link is already part of the genome
+ */
 bool duplicateLink(sGenome * gen, const int neuron_id1, const int neuron_id2) {
   int i;
   for (i = 0; i < gen->iNumLinks; i ++) {
     if ( gen->vLinks[i]->iFromNeuron == neuron_id1 &&
          gen->vLinks[i]->iToNeuron == neuron_id2 ) {
-      return TRUE;
+      return E_TRUE;
     }
   }
-  return FALSE;
+  return E_FALSE;
 }
 
 /* tests to see if the parameter is equal to any existing neuron ID's.
- * Returns true if this is the case.
+ * Returns E_TRUE if this is the case.
  */
 bool alreadyHaveThisNeuronId(sGenome * gen, const int id) {
   int i;
   for (i = 0; i < gen->iNumNeurons; i++)
     if (gen->vNeurons[i]->iId == id)
-      return TRUE;
-  return FALSE;
+      return E_TRUE;
+  return E_FALSE;
 }
 
-/*******************************************************************************
- * creation / deletion of the phenotype corresponding to a genotype
- ******************************************************************************/
-
-
-/* creates a neural network based upon the information in the genome.
- * returns a pointer to the newly created ANN
- */
-
-sPhenotype * createPhenotype(sGenome * gen, int depth) {
-  //first make sure there is no existing phenotype for this genome
-  if (gen->pPhenotype != NULL) freePhenotype(gen);
-
-  // allocate the new phenotype
-  gen->pPhenotype = (sPhenotype *) calloc(1, sizeof(*gen->pPhenotype));
-
-  // this will hold all the neurons required for the phenotype
-  gen->pPhenotype->vNeurons =
-                   calloc(gen->iNumNeurons, sizeof(*gen->pPhenotype->vNeurons));
-  gen->pPhenotype->iNumNeurons = gen->iNumNeurons;
-  gen->pPhenotype->iDepth = depth;
-
-  // first, create all the required neurons
-  int i;
-  for (i = 0; i < gen->iNumNeurons; i++)
-    gen->pPhenotype->vNeurons[i] = createNeuron(gen->vNeurons[i]->iId,
-                                                gen->vNeurons[i]->eNeuronType,
-                                                gen->vNeurons[i]->dSplitY,
-                                                gen->vNeurons[i]->dSplitX,
-                                           gen->vNeurons[i]->dSigmoidCurvature);
-  // now to create the links.
-  for (i = 0; i < gen->iNumLinks; i++) {
-    // make sure the link gene is enabled before the connection is created
-    if (gen->vLinks[i]->bEnabled) {
-      // get the pointers to the relevant neurons
-      int neuronPos = getNeuronPos(gen, gen->vLinks[i]->iFromNeuron);
-      sNeuron * fromNeuron = gen->pPhenotype->vNeurons[neuronPos];
-
-      neuronPos = getNeuronPos(gen, gen->vLinks[i]->iToNeuron);
-      sNeuron * toNeuron = gen->pPhenotype->vNeurons[neuronPos];
-
-      // create a link between those two neurons and assign the weight stored
-      // in the gene
-      sLink * tmpLink = createLink(gen->vLinks[i]->dWeight, fromNeuron,
-                                   toNeuron, gen->vLinks[i]->bRecurrent);
-      //add new links to neuron
-      phenotypeAddLinkOut(fromNeuron, tmpLink);
-      phenotypeAddLinkIn(toNeuron, tmpLink);
-    }
-  }
-  return gen->pPhenotype;
-}
-
-void freePhenotype(sGenome * gen) {
-  int i, j;
-  for (i = 0; i < gen->pPhenotype->iNumNeurons; i++) {
-    for (j = 0; j < gen->pPhenotype->vNeurons[i]->iNumLinksIn; j++)
-      free(gen->pPhenotype->vNeurons[i]->vLinksIn[j]);
-    free(gen->pPhenotype->vNeurons[i]->vLinksIn);
-    free(gen->pPhenotype->vNeurons[i]->vLinksOut);
-    free(gen->pPhenotype->vNeurons[i]);
-  }
-  free(gen->pPhenotype->vNeurons);
-  free(gen->pPhenotype);
-  gen->pPhenotype = NULL;
-}

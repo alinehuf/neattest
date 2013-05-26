@@ -45,6 +45,7 @@ typedef struct {
   //global
   int iNumIndividuals;
   int iNumEpoch;
+  int iDumpEvery;
 } sParams;
 
 /*******************************************************************************
@@ -52,6 +53,7 @@ typedef struct {
  ******************************************************************************/
 
 sParams * loadConf(char * file);
+void dumpParams(FILE * out, sParams * params);
 void error(char * format, char * message);
 char * loadString(char * prefix, FILE * fileref);
 void loadNumber(char * prefix, void * var, int type, FILE * fileref);

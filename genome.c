@@ -117,7 +117,7 @@ sGenome * createInitialGenome(int id, int nbInputs, int nbOutputs) {
   sLinkGene * lg;
   // create the input neurons
   double inSlice = 1 / (double) nbInputs;
-	for (i = 0; i < nbInputs; i++) {
+  for (i = 0; i < nbInputs; i++) {
     ng = createNeuronGene(i, INPUT, E_FALSE, i * inSlice, 0);
     genomeAddNeuron(gen, ng);
   }
@@ -129,17 +129,17 @@ sGenome * createInitialGenome(int id, int nbInputs, int nbOutputs) {
   double outSlice = 1 / (double) (nbOutputs + 1);
   for (i = 0; i < nbOutputs; i++) {
     ng = createNeuronGene(i + nbInputs + 1, OUTPUT, E_FALSE, (i+1) * outSlice, 1);
-		genomeAddNeuron(gen, ng);
+    genomeAddNeuron(gen, ng);
   }
-	// create the link genes, connect each input neuron to each output neuron and
-	// assign a random weight -1 < w < 1
-	for (i = 0; i < nbInputs + 1; i++) {
-		for (j = 0; j < nbOutputs; j++) {
+  // create the link genes, connect each input neuron to each output neuron and
+  // assign a random weight -1 < w < 1
+  for (i = 0; i < nbInputs + 1; i++) {
+    for (j = 0; j < nbOutputs; j++) {
       lg = createLinkGene(nbInputs + nbOutputs + 1 + gen->iNumLinks,
                           gen->vNeurons[i]->iId,
                           gen->vNeurons[nbInputs + j + 1]->iId,
                           randClamped(), E_TRUE, E_FALSE);
-			genomeAddLink(gen, lg);
+      genomeAddLink(gen, lg);
     }
   }
   // init phenotype
@@ -260,16 +260,14 @@ void mutateWeigth(sGenome * gen, sParams * params) {
   int i;
   for (i = 0; i < gen->iNumLinks; i++) {
     // do we mutate this gene?
-		if (randFloat() < params->dWeightMutationRate) {
+    if (randFloat() < params->dWeightMutationRate) {
       // do we change the weight to a completely new weight ?
-			if (randFloat() < params->dProbabilityWeightReplaced) {
+      if (randFloat() < params->dProbabilityWeightReplaced) {
         // change the weight using the random distribtion defined by 'type'
-				gen->vLinks[i]->dWeight = randClamped();
+        gen->vLinks[i]->dWeight = randClamped();
       } else {
-				// perturb the weight
-				gen->vLinks[i]->dWeight+=randClamped() * params->dMaxWeightPerturbation;
-        if (gen->vLinks[i]->dWeight > 1) gen->vLinks[i]->dWeight = 1;
-        if (gen->vLinks[i]->dWeight < -1) gen->vLinks[i]->dWeight = -1;
+        // perturb the weight
+        gen->vLinks[i]->dWeight+=randClamped() * params->dMaxWeightPerturbation;
       }
     }
   }
@@ -279,7 +277,7 @@ void mutateActivationResponse(sGenome * gen, sParams * params) {
   int i;
   for (i = 0; i < gen->iNumNeurons; i++) {
     // do we mutate this neuron gene ?
-		if (randFloat() < params->dActivationMutationRate) {
+    if (randFloat() < params->dActivationMutationRate) {
       // perturb the sigmoid curvature
       gen->vNeurons[i]->dSigmoidCurvature += randClamped() *
                                              params->dMaxActivationPerturbation;
@@ -296,9 +294,6 @@ void mutateActivationResponse(sGenome * gen, sParams * params) {
  ******************************************************************************/
 
 void addLink(sGenome * gen, sPopulation * pop) {
-  // do we really add a link ?
-  if (randFloat() > pop->sParams->dChanceAddLink) return;
-  
   // define holders for the two neurons to be linked. If we have find two
   // valid neurons to link these values will become >= 0.
   int neuron_id1 = -1;
@@ -383,20 +378,17 @@ void addLink(sGenome * gen, sPopulation * pop) {
 // this function adds a neuron to the genotype by examining the network,
 // splitting one of the links and inserting the new neuron.
 void addNeuron(sGenome * gen, sPopulation * pop) {
-  //just return dependent on mutation rate
-  if (randFloat() > pop->sParams->dChanceAddNode) return;
-
-  //if a valid link is found into which to insert the new neuron
-  //this value is set to E_TRUE.
+  // if a valid link is found into which to insert the new neuron
+  // this value is set to E_TRUE.
   bool bDone = E_FALSE;
 
-  //this will hold the index into gen->vLinks of the chosen link gene
+  // this will hold the index into gen->vLinks of the chosen link gene
   int chosenLink = 0;
 
-  //first a link is chosen to split. If the genome is small the code makes
-  //sure one of the older links is split to ensure a chaining effect does
-  //not occur. Here, if the genome contains less than 5 hidden neurons it
-  //is considered to be too small to select a link at random
+  // first a link is chosen to split. If the genome is small the code makes
+  // sure one of the older links is split to ensure a chaining effect does
+  // not occur. Here, if the genome contains less than 5 hidden neurons it
+  // is considered to be too small to select a link at random
   if (gen->iNumNeurons < gen->iNumInputs + gen->iNumOuputs + 5) {
     int numTrysToFindOldLink = pop->sParams->iNumTrysToFindOldLink;
     while(numTrysToFindOldLink--) {
@@ -412,14 +404,14 @@ void addNeuron(sGenome * gen, sPopulation * pop) {
         numTrysToFindOldLink = 0;
       }
     }
-    if (!bDone) //failed to find a decent link
+    if (!bDone) // failed to find a decent link
       return;
   } else {
-    //the genome is of sufficient size for any link to be acceptable
+    // the genome is of sufficient size for any link to be acceptable
     while (!bDone) {
       chosenLink = randInt(0, gen->iNumLinks - 1);
-      //make sure the link is enabled and that it is not a recurrent link
-      //or has a BIAS input
+      // make sure the link is enabled and that it is not a recurrent link
+      // or has a BIAS input
       int fromNeuron = gen->vLinks[chosenLink]->iFromNeuron;
 
       if (gen->vLinks[chosenLink]->bEnabled &&
@@ -468,7 +460,7 @@ void addNeuron(sGenome * gen, sPopulation * pop) {
     // create the new neuron gene and add it.
     sNeuronGene * ng = createNeuronGene( neuron_id, HIDDEN, E_FALSE,
                                          new_split_x, new_split_y );
-		genomeAddNeuron(gen, ng);
+    genomeAddNeuron(gen, ng);
     addDepth(pop, new_split_y);
     // Two new link innovations are required, one for each of the
     // new links created when this gene is split.
@@ -545,7 +537,7 @@ sGenome * crossover(sGenome * mum, sGenome * dad) {
     best = DAD;
   }
 
-  // create en empty genome for the baby (id will be adjusted later)
+  // create an empty genome for the baby (id will be adjusted later)
   sGenome * baby = createEmptyGenome(-1, mum->iNumInputs, mum->iNumOuputs);
   // this will hold a copy of the gene we wish to add at each step
   sLinkGene * selectedGene = NULL; // to control that the choice of the gene
@@ -671,7 +663,7 @@ double getCompatibilityScore(sGenome * gen1, sGenome * gen2, sParams * p) {
   double numMatched = 0;
 
   // this records the summed difference of weights in matched genes
-  double	weightDiff = 0;
+  double  weightDiff = 0;
 
   // position holders for each genome. They are incremented as we
   // step down each genomes length.
@@ -717,6 +709,9 @@ double getCompatibilityScore(sGenome * gen1, sGenome * gen2, sParams * p) {
   //get the length of the longest genome
   int longest = gen2->iNumLinks;
   if (gen1->iNumLinks > longest) longest = gen1->iNumLinks;
+  // Stanley propose to have longest=1 if both genomes are small
+  // (fewer than 20 genes) => it doesn't seem to be better...
+  //if (longest < 20) longest = 1;
 
   //finally calculate the scores
   double score = (p->dExcessGenesCoef * numExcess / (double) longest) +

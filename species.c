@@ -183,15 +183,15 @@ void adjustFitnesses(sSpecies * spec, sParams * param) {
   for (gen = 0; gen < spec->iNumMembers; ++gen) {
     double fitness = spec->vMembers[gen]->dFitness;
 
-    //boost the fitness scores if the species is young
+    // boost the fitness scores if the species is young
     if (spec->iAge < param->iYoungBonusAgeThreshhold)
       fitness *= param->dYoungFitnessBonus;
 
-    //punish older species
+    // punish older species
     if (spec->iAge > param->iOldAgeThreshold)
       fitness *= param->dOldAgePenalty;
 
-    //apply fitness sharing to adjusted fitnesses
+    // apply fitness sharing to adjusted fitnesses
     spec->vMembers[gen]->dAjustedFitness = fitness / spec->iNumMembers;
   }
 }

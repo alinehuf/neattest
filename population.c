@@ -117,7 +117,10 @@ void epoch(sPopulation * pop) {
         // first grab the best performing genome from this species and transfer
         // to the new population without mutation. This provides per species
         // elitism
-        if (!bChosenBestYet) {
+        // => Stanley recommends to do this only if the species has more than
+        //    five networks, in Neat1.1 he used the futur number of individual
+        //    instead of the current one... 
+        if (!bChosenBestYet) { //  && numToSpawn > 5
           baby = copyGenome(pop->vSpecies[spec]->sLeader);
           bChosenBestYet = E_TRUE;
         } else {
@@ -156,13 +159,17 @@ void epoch(sPopulation * pop) {
 
           // now we have a spawned child lets mutate it! First there is the
           // chance a neuron may be added
-          addNeuron(baby, pop);
+          if (randFloat() < pop->sParams->dChanceAddNode)
+            addNeuron(baby, pop);
           // now there's the chance a link may be added
-          addLink(baby, pop);
-          // mutate the weights
-          mutateWeigth(baby, pop->sParams);
-          // mutate the activation response
-          mutateActivationResponse(baby, pop->sParams);
+          else if (randFloat() < pop->sParams->dChanceAddLink)
+            addLink(baby, pop);
+          else {
+            // mutate the weights
+            mutateWeigth(baby, pop->sParams);
+            // mutate the activation response
+            mutateActivationResponse(baby, pop->sParams);
+          }
        } // end choice of a baby
 
         //sort the babies genes by their innovation numbers
@@ -227,7 +234,7 @@ void resetAndKill(sPopulation * pop) {
 
   // control the number of species
   if (pop->iNumSpecies > pop->sParams->iMaxSpecies)
-    pop->sParams->dCompatibilityThreshold += 0.001;
+    pop->sParams->dCompatibilityThreshold += 0.005;
 
   // purge the species
   int i = 0;

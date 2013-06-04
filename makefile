@@ -1,7 +1,7 @@
 # Makefile
 #! /bin/sh
 
-DEBUG=yes
+DEBUG=no
 
 CC = gcc
 ifeq ($(DEBUG),yes)
@@ -11,10 +11,13 @@ else
 endif
 
 #macos
-LDFLAGS = -I/usr/local/include/graphviz/ 
+LDFLAGS = -I/usr/local/include/graphviz/
 #linux
-LDFLAGS += -I/usr/include/graphviz/
+#LDFLAGS += -L/usr/lib/graphviz/
+#LDFLAGS += -I/usr/include/graphviz/
+
 LDFLAGS += -lgvc -lcgraph -lcdt -lm
+
 
 SRC = $(wildcard *.c)
 OBJ= $(SRC:.cpp=.o)
@@ -38,6 +41,6 @@ $(EXEC): $(OBJ)
 clean:
 	rm -f *.o
 
-rmproper: clean
+mrproper: clean
 	rm -f $(EXEC)
 

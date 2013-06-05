@@ -126,6 +126,17 @@ void speciateAndCalculateSpawnLevels(sPopulation * pop) {
   int gen, spec;
   bool bAdded;
 
+  // control the number of species
+  double dCompatibilityModifier = 0.01;
+  if (pop->iGeneration > 1) {
+    if (pop->iNumSpecies > pop->sParams->iMaxSpecies)
+      pop->sParams->dCompatibilityThreshold += dCompatibilityModifier;
+    if (pop->iNumSpecies < pop->sParams->iMaxSpecies)
+      pop->sParams->dCompatibilityThreshold -= dCompatibilityModifier;
+    if (pop->sParams->dCompatibilityThreshold < dCompatibilityModifier)
+      pop->sParams->dCompatibilityThreshold = dCompatibilityModifier;
+  }
+
   // iterate through each genome and speciate
   for (gen = 0; gen < pop->iNumGenomes; gen++) {
     bAdded = E_FALSE;
@@ -133,7 +144,8 @@ void speciateAndCalculateSpawnLevels(sPopulation * pop) {
     // if compatible add to species. If not, create a new species
     for (spec = 0; spec < pop->iNumSpecies; spec++) {
       double compatibility = getCompatibilityScore(pop->vGenomes[gen],
-                                                   pop->vSpecies[spec]->sLeader, pop->sParams);
+                                                   pop->vSpecies[spec]->sLeader,
+                                                   pop->sParams);
       // if this individual is similar to this species add to species
       if (compatibility <= pop->sParams->dCompatibilityThreshold) {
         addMember(pop->vSpecies[spec], pop->vGenomes[gen]);

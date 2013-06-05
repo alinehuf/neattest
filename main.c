@@ -18,6 +18,13 @@
  * was disabled in either parent. In each generation, 25% of offspring resulted 
  * from mutation without crossover. The interspecies mating rate was 0.001. »
  *
+ * stabilisation of outputs ?
+ * "The proper (and quite nice) way to do it is to check every hidden node and 
+ * output node from one timestep to the next, and see if nothing has changed, or
+ * at least not changed within some delta. Once this criterion is met, the 
+ * output must be stable. (...) Generally, stabilization is used in 
+ * classification problems, or in board games."
+ *
  * DONE  
  * population / epoch() :
  *                   Stanley recommends to clone species leader only if the 
@@ -78,22 +85,22 @@ void genomeToGraphViz(sGenome * gen, testBase * data, sPopulation * pop,
 int main(int argc, char * argv[]) {
   srand((unsigned int) time(NULL)); // inits random
 
-//  if (argc < 2) {
-//    fprintf(stderr, "usage: %s XOR | data_file + parameter_file\n",
-//            argv[0]);
-//    return EXIT_FAILURE;
-//  }
-//  else if (strcasecmp("XOR", argv[1]) == 0) populationTest(); // XOR test
-//  else if (argc < 3) {
-//    fprintf(stderr, "usage: %s data_file parameter_file\n", argv[0]);
-//    return EXIT_FAILURE;
-//  }
-//  else testOneGame(argv[1], argv[2]);
+  if (argc < 2) {
+    fprintf(stderr, "usage: %s XOR | data_file + parameter_file\n",
+            argv[0]);
+    return EXIT_FAILURE;
+  }
+  else if (strcasecmp("XOR", argv[1]) == 0) populationTest(); // XOR test
+  else if (argc < 3) {
+    fprintf(stderr, "usage: %s data_file parameter_file\n", argv[0]);
+    return EXIT_FAILURE;
+  }
+  else testOneGame(argv[1], argv[2]);
 
 //  testOneGame("/Users/dex/FAC/M1_MEMOIRE/NeatTest_0.1/NeatTest_0.1/data/tictactoe_P1.txt",
 //              "/Users/dex/FAC/M1_MEMOIRE/NeatTest_0.1/NeatTest_0.1/params/params_1.ini");
 
-  populationTest();
+//  populationTest();
 
   return 0;
 }
@@ -164,7 +171,7 @@ void testOneGame(char * gamePath, char * paramsPath) {
         free(outputs);
       }
       totalError /= simpleData->iOutputSize * simpleData->iNumEntries;
-      pop->vGenomes[indiv]->dFitness = (1 - totalError) * 100;
+      pop->vGenomes[indiv]->dFitness = (1-totalError) * (1-totalError) * 100;
       if (Verbose) printf("%f\t", pop->vGenomes[indiv]->dFitness);
       if (GlobalLog)
         fprintf(GlobalLogFile, "%f\t", pop->vGenomes[indiv]->dFitness);
@@ -543,7 +550,7 @@ void populationTest() {
           free(outputs);
         }
         totalError /= 4;
-        pop->vGenomes[indiv]->dFitness = (1 - totalError) * 100;
+        pop->vGenomes[indiv]->dFitness = (1-totalError) * (1-totalError) * 100;
         
         if (collected_outputs[0] < 0.5 && collected_outputs[1] > 0.5 &&
             collected_outputs[2] > 0.5 && collected_outputs[3] < 0.5) {
@@ -560,7 +567,7 @@ void populationTest() {
       if (Verbose) printf("\n");
 
       // create next epoch
-      if (iter < params->iNumEpoch-1) epoch(pop);
+      epoch(pop);
 
       // find best genome
       double max = 0;
@@ -582,7 +589,7 @@ void populationTest() {
   }
 
   printf("%d tests - solution found %d times - win : %d %% - it tooks an "
-         "average of %d generation", num_tests, winned,
+         "average of %d generation\n", num_tests, winned,
          (int) ((double) winned / (double) num_tests * 100),
          (int) (average_time / winned));
   free(params);

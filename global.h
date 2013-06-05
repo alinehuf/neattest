@@ -250,6 +250,8 @@ void dumpGenome(FILE * out, sGenome * gen);
 // mutations : weight and sigmoidCurvature mutation, add node or add link
 void mutateWeigth(sGenome * gen, sParams * params);
 void mutateActivationResponse(sGenome * gen, sParams * params);
+void mutateToggleEnable(sGenome * gen);
+void mutateReenableFirst(sGenome * gen);
 void addLink(sGenome * gen, sPopulation * pop);
 void addNeuron(sGenome * gen, sPopulation * pop);
 // crossover

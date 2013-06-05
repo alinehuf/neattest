@@ -169,6 +169,12 @@ void epoch(sPopulation * pop) {
             mutateWeigth(baby, pop->sParams);
             // mutate the activation response
             mutateActivationResponse(baby, pop->sParams);
+            // enable or disable a random gene
+            if (randFloat() < 0.1)  // mutate_toggle_enable_prob = 0.1
+              mutateToggleEnable(baby);
+            // find first disabled gene and enable it
+            if (randFloat() < 0.05)  // mutate_gene_reenable_prob = 0.05
+              mutateReenableFirst(baby);
           }
        } // end choice of a baby
 
@@ -231,10 +237,6 @@ newGenerationReady:
 void resetAndKill(sPopulation * pop) {
   pop->dTotFitAdj = 0;
   pop->dAvFitAdj  = 0;
-
-  // control the number of species
-  if (pop->iNumSpecies > pop->sParams->iMaxSpecies)
-    pop->sParams->dCompatibilityThreshold += 0.005;
 
   // purge the species
   int i = 0;

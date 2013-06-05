@@ -225,14 +225,17 @@ double * updateANNresponse(sPhenotype * phen, double * inputs, int nbInputs,
 /* sigmoid function of the neurons.
  */
 double sigmoid(double activSum, double activationResponse) {
+  /* binary threshold */
+  //if (activSum > 0) return 1;
+  //else return 0;
   /* if activationResponse tends to 0, this is a binary threshold function
    * netinput > 0 => 1
    * netinput < 0 => 0
    * else if activationResponse tends to 1, the sigmoid curve is smoother
    */
-   //return (1 / (1 + exp(-activSum / activationResponse)));
+  //return (1 / (1 + exp(-activSum / activationResponse)));
   /* Stanley used a constant activation to have a sigmoid slope near to linear
-   * => vraiment mieux
+   * => realy better, NEAT loses itself in the research of the good activationR 
    */
   return (1 / (1 + exp(-activSum * 4.924273)));
 }

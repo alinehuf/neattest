@@ -256,22 +256,71 @@ void dumpGenome(FILE * out, sGenome * gen) {
  * mutations : weight and sigmoidCurvature mutation
  ******************************************************************************/
 
+/* Stanley neat 1.1
+ * "Mutations of weight go up to 2.5 in a single mutation. You wouldn't want it 
+ * over 5.0 or so." => MutationPower 2.5
+ * "The power of mutation will rise farther into the genome
+ *  on the theory that the older genes are more fit since
+ *  they have stood the test of time"
+ * 50% mutatte severe
+ *    30% perturbation : +=N*muration_rate   with N in ]-1,1[ 
+ *    10% remplacement : =N*muration_rate   with N in ]-1,1[
+ * else if total_genes > 10 && end of genome (20% new genes)
+ *    50% perturbation : +=N*muration_rate   with N in ]-1,1[
+ *    30% remplacement : =N*muration_rate   with N in ]-1,1[
+ * else
+ *    0% perturbation
+ *    0% remplacement
+ */
 void mutateWeigth(sGenome * gen, sParams * params) {
+  double dProbOrdinaryMutation = 0.5;
+  double dMeanWeightPerturbation = 0.4;
+  double dMeanWeightRemplacement = 0.2;
+  double dMutationPower = 1.8; // 2.5;
+  double endpart = gen->iNumLinks * 0.8;
   int i;
   for (i = 0; i < gen->iNumLinks; i++) {
-    // do we mutate this gene?
-    if (randFloat() < params->dWeightMutationRate) {
+    // do we aplly ordinary mutation to this gene?
+    if (randFloat() < dProbOrdinaryMutation) {
+      // do we perturb the weight
+      if (randFloat() < dMeanWeightPerturbation - 0.1) {
+        gen->vLinks[i]->dWeight+=randClamped() * dMutationPower;
+      }
       // do we change the weight to a completely new weight ?
-      if (randFloat() < params->dProbabilityWeightReplaced) {
-        // change the weight using the random distribtion defined by 'type'
+      else if (randFloat() < dMeanWeightRemplacement - 0.1) {
         gen->vLinks[i]->dWeight = randClamped();
-      } else {
-        // perturb the weight
-        gen->vLinks[i]->dWeight+=randClamped() * params->dMaxWeightPerturbation;
+      }
+    }
+    // mutate specifiquely the new genes
+    else if (gen->iNumLinks >= 10 && i > endpart) {
+      // do we perturb the weight
+      if (randFloat() < dMeanWeightPerturbation + 0.1) {
+        gen->vLinks[i]->dWeight+=randClamped() * dMutationPower;
+      }
+      // do we change the weight to a completely new weight ?
+      else if (randFloat() < dMeanWeightRemplacement + 0.1) {
+        gen->vLinks[i]->dWeight = randClamped();
       }
     }
   }
 }
+
+//void mutateWeigth(sGenome * gen, sParams * params) {
+//  int i;
+//  for (i = 0; i < gen->iNumLinks; i++) {
+//    // do we mutate this gene?
+//    if (randFloat() < params->dWeightMutationRate) {
+//      // do we change the weight to a completely new weight ?
+//      if (randFloat() < params->dProbabilityWeightReplaced) {
+//        // change the weight using the random distribtion defined by 'type'
+//        gen->vLinks[i]->dWeight = randClamped();
+//      } else {
+//        // perturb the weight
+//        gen->vLinks[i]->dWeight+=randClamped() * params->dMaxWeightPerturbation;
+//      }
+//    }
+//  }
+//}
 
 void mutateActivationResponse(sGenome * gen, sParams * params) {
   int i;
@@ -285,6 +334,42 @@ void mutateActivationResponse(sGenome * gen, sParams * params) {
         gen->vNeurons[i]->dSigmoidCurvature = 1;
       if (gen->vNeurons[i]->dSigmoidCurvature < 0)
         gen->vNeurons[i]->dSigmoidCurvature = 0;
+    }
+  }
+}
+
+/* Toggle genes from enable on to enable off or vice versa. 
+ */
+void mutateToggleEnable(sGenome * gen) {
+  int i;
+  int chosenLink = randInt(0, gen->iNumLinks - 1);
+
+  //Toggle the enable on this gene
+  if (gen->vLinks[chosenLink]->bEnabled) {
+    // We need to make sure that another gene connects out of the in-node
+    // Because if not a section of network will break off and become isolated
+    for (i = 0; i < gen->iNumLinks; i++) {
+      if (gen->vLinks[chosenLink]->iFromNeuron == gen->vLinks[i]->iFromNeuron
+          && gen->vLinks[i]->bEnabled == E_TRUE
+          && gen->vLinks[chosenLink]->iInnovId != gen->vLinks[i]->iInnovId)
+        break;
+    }
+    //Disable the gene if it's safe to do so
+    if (i < gen->iNumLinks) gen->vLinks[chosenLink]->bEnabled = E_FALSE;
+  }  
+  else gen->vLinks[chosenLink]->bEnabled = E_TRUE;
+}
+
+/* Find first disabled gene and enable it 
+ */
+void mutateReenableFirst(sGenome * gen) {
+  int i;
+  for (i = 0; i < gen->iNumLinks; i++) {
+    // Search for a disabled gene
+    if (gen->vLinks[i]->bEnabled == E_FALSE) {
+      // Reenable it
+      gen->vLinks[i]->bEnabled = E_TRUE;
+      return;
     }
   }
 }
@@ -391,7 +476,7 @@ void addNeuron(sGenome * gen, sPopulation * pop) {
   // is considered to be too small to select a link at random
   if (gen->iNumNeurons < gen->iNumInputs + gen->iNumOuputs + 5) {
     int numTrysToFindOldLink = pop->sParams->iNumTrysToFindOldLink;
-    while(numTrysToFindOldLink--) {
+    while(numTrysToFindOldLink-- && bDone == E_FALSE) {
       //choose a link with a bias towards the older links in the genome
       chosenLink = randInt(0, gen->iNumLinks - 1 - (int) sqrt(gen->iNumLinks));
       //make sure the link is enabled and that it is not a recurrent link
@@ -711,7 +796,7 @@ double getCompatibilityScore(sGenome * gen1, sGenome * gen2, sParams * p) {
   if (gen1->iNumLinks > longest) longest = gen1->iNumLinks;
   // Stanley propose to have longest=1 if both genomes are small
   // (fewer than 20 genes) => it doesn't seem to be better...
-  //if (longest < 20) longest = 1;
+  //if (longest < gen1->iNumInputs + gen1->iNumOuputs + 6) longest = 1;
 
   //finally calculate the scores
   double score = (p->dExcessGenesCoef * numExcess / (double) longest) +
